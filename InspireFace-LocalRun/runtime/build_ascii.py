@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """Build the demo from a pure-ASCII mirror to dodge AGP's non-ASCII path problem.
 
-AGP 8.6.1 / aapt2 / Gradle test workers mangle the Chinese workspace path on
+AGP 8.6.1 / aapt2 / Gradle test workers mangle the non-ASCII workspace path on
 Windows: aapt2 cannot stat android.jar and unit tests all fail with
 ClassNotFoundException. android.overridePathCheck=true gets past the guard but
-does not fix the downstream tools. So we mirror sources + SDK + Gradle into
-D:\\paper\\ifd-build (ASCII), build there, and copy the APK back.
+does not fix the downstream tools. So we mirror sources + SDK + Gradle into a
+pure-ASCII directory (see env_config.ASCII_MIRROR), build there, and copy the
+APK back. If the repository is already on an ASCII path this script is not
+needed: use runtime/run_gradle.py instead.
 """
 import os
 import sys
@@ -22,14 +24,17 @@ SDK_SRC = os.path.join(BASE, "android")
 AAR_SRC = os.path.join(BASE, "downloads", "inspireface-1.2.4.post1.aar")
 GRADLE_SRC = os.path.join(BASE, "gradle", "gradle-8.7")
 
-MIRROR = r"D:\paper\ifd-build"
+sys.path.insert(0, BASE)
+import env_config as cfg  # noqa: E402  (machine-specific paths live here)
+
+MIRROR = cfg.ASCII_MIRROR
 M_DEMO = os.path.join(MIRROR, "android-demo")
 M_SDK = os.path.join(MIRROR, "sdk")
 M_AAR = os.path.join(MIRROR, "inspireface-1.2.4.post1.aar")
 M_GRADLE = os.path.join(MIRROR, "gradle-8.7")
-JAVA_HOME = r"C:\Users\pjd02\.jdks\jbr-17.0.14"
-RO_DEP_CACHE = r"C:\Users\pjd02\.gradle\caches"
-LOGS = os.path.join(BASE, "logs")
+JAVA_HOME = cfg.JAVA_HOME
+RO_DEP_CACHE = cfg.RO_DEP_CACHE
+LOGS = cfg.LOGS
 
 IGNORE = shutil.ignore_patterns(
     ".git", "build", ".gradle", ".idea", "*.iml",
@@ -58,7 +63,7 @@ def main():
 
     # Pure-ASCII config files inside the mirror.
     with open(os.path.join(M_DEMO, "local.properties"), "w", encoding="ascii", newline="\n") as f:
-        f.write("sdk.dir=D:/paper/ifd-build/sdk\n")
+        f.write("sdk.dir=%s\n" % M_SDK.replace("\\", "/"))
     with open(os.path.join(M_DEMO, "sdk.local.properties"), "w", encoding="ascii", newline="\n") as f:
         f.write("aarPath=../inspireface-1.2.4.post1.aar\n")
 
@@ -67,17 +72,19 @@ def main():
         print("ERROR: gradle.bat missing:", gradle_bat)
         return 2
 
+    jdk = cfg.require_jdk()
     env = os.environ.copy()
-    env["JAVA_HOME"] = JAVA_HOME
+    env["JAVA_HOME"] = jdk
     env["ANDROID_HOME"] = M_SDK
     env["ANDROID_SDK_ROOT"] = M_SDK
-    env["GRADLE_USER_HOME"] = os.path.join(BASE, "gradle-home")
-    env["GRADLE_RO_DEP_CACHE"] = RO_DEP_CACHE
-    env["TMP"] = os.path.join(BASE, "tmp")
-    env["TEMP"] = os.path.join(BASE, "tmp")
+    env["GRADLE_USER_HOME"] = cfg.GRADLE_USER_HOME
+    if RO_DEP_CACHE:
+        env["GRADLE_RO_DEP_CACHE"] = RO_DEP_CACHE
+    env["TMP"] = cfg.TMP
+    env["TEMP"] = cfg.TMP
     os.makedirs(env["GRADLE_USER_HOME"], exist_ok=True)
     os.makedirs(env["TMP"], exist_ok=True)
-    env["PATH"] = os.path.join(JAVA_HOME, "bin") + os.pathsep + env.get("PATH", "")
+    env["PATH"] = os.path.join(jdk, "bin") + os.pathsep + env.get("PATH", "")
 
     cmdline = ('"%s" --offline --no-daemon -p "%s" -PinspirefaceSdkSource=local '
                ':app:assembleDebug :app:testDebugUnitTest') % (gradle_bat, M_DEMO)

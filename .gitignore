@@ -39,6 +39,9 @@ InspireFace-LocalRun/runtime/__pycache__/
 InspireFace-LocalRun/android-demo/local.properties
 InspireFace-LocalRun/android-demo/sdk.local.properties
 InspireFace-LocalRun/android-demo/plus.local.properties
+InspireFace-LocalRun/android-demo/keystore.properties
+InspireFace-LocalRun/runtime/env.local.bat
+InspireFace-LocalRun/runtime/env.local.sh
 
 # --- OS noise ---
 .DS_Store

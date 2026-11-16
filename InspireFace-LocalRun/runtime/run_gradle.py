@@ -6,6 +6,11 @@ Usage:
     python runtime/run_gradle.py :app:assembleDebug :app:assembleDebugAndroidTest
     python runtime/run_gradle.py :app:testDebugUnitTest --tests <fqcn>
 
+Environment switches (useful on a fresh machine, see ENVIRONMENT_SETUP.md):
+    REALCUE_GRADLE_ONLINE=1   drop --offline so Gradle can download dependencies
+    REALCUE_SDK_SOURCE=jitpack  resolve InspireFace from JitPack instead of the
+                              local AAR (no AAR download needed)
+
 Prints a compact summary and writes the full log to runtime/logs/gradle-<task>-<stamp>.txt.
 """
 import os
@@ -23,14 +28,26 @@ if not args:
     print("no gradle task given", flush=True)
     sys.exit(2)
 
+if not os.path.isfile(v.GRADLE_BAT):
+    print("ERROR: Gradle 8.7 launcher missing:", v.GRADLE_BAT, flush=True)
+    print("Run 'python runtime/setup_env.py' first (see ENVIRONMENT_SETUP.md).",
+          flush=True)
+    sys.exit(2)
+
+# A fresh clone has no populated Gradle cache. Let the first build go online;
+# subsequent builds stay offline so nothing new is written to C:.
+offline = "" if os.environ.get("REALCUE_GRADLE_ONLINE") == "1" else "--offline"
+sdk_source = os.environ.get("REALCUE_SDK_SOURCE", "local")
+
 env = v.make_env()
 os.makedirs(v.LOGS, exist_ok=True)
 stamp = time.strftime("%Y%m%d-%H%M%S")
 tag = args[0].replace(":", "_").strip("_")
 log_path = os.path.join(v.LOGS, "gradle-%s-%s.txt" % (tag, stamp))
 
-cmdline = ('"%s" --no-daemon --offline -p "%s" -PinspirefaceSdkSource=local %s'
-           % (v.GRADLE_BAT, v.DEMO, " ".join('"%s"' % a if " " in a else a for a in args)))
+cmdline = ('"%s" --no-daemon %s -p "%s" -PinspirefaceSdkSource=%s %s'
+           % (v.GRADLE_BAT, offline, v.DEMO, sdk_source,
+              " ".join('"%s"' % a if " " in a else a for a in args)))
 print("CMD:", cmdline, flush=True)
 print("LOG:", log_path, flush=True)
 

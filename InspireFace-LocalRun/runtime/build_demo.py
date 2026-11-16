@@ -13,13 +13,16 @@ import subprocess
 sys.stdout.reconfigure(encoding="utf-8")
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PROJECT = os.path.dirname(BASE)
-DEMO = os.path.join(PROJECT, "android-demo")
-SDK = os.path.join(BASE, "android")
-GRADLE_BAT = os.path.join(BASE, "gradle", "gradle-8.7", "bin", "gradle.bat")
-JAVA_HOME = r"C:\Users\pjd02\.jdks\jbr-17.0.14"
-RO_DEP_CACHE = r"C:\Users\pjd02\.gradle\caches"
-LOGS = os.path.join(BASE, "logs")
+sys.path.insert(0, BASE)
+import env_config as cfg  # noqa: E402  (machine-specific paths live here)
+
+PROJECT = cfg.PROJECT
+DEMO = cfg.DEMO
+SDK = cfg.SDK
+GRADLE_BAT = cfg.GRADLE_BAT
+JAVA_HOME = cfg.JAVA_HOME
+RO_DEP_CACHE = cfg.RO_DEP_CACHE
+LOGS = cfg.LOGS
 
 TASKS = [":app:assembleDebug", ":app:testDebugUnitTest"]
 
@@ -37,17 +40,19 @@ def main():
         print("ERROR: self-contained SDK missing android-35")
         return 2
 
+    jdk = cfg.require_jdk()
     env = os.environ.copy()
-    env["JAVA_HOME"] = JAVA_HOME
+    env["JAVA_HOME"] = jdk
     env["ANDROID_HOME"] = SDK
     env["ANDROID_SDK_ROOT"] = SDK
-    env["GRADLE_USER_HOME"] = os.path.join(BASE, "gradle-home")
-    env["GRADLE_RO_DEP_CACHE"] = RO_DEP_CACHE
-    env["TMP"] = os.path.join(BASE, "tmp")
-    env["TEMP"] = os.path.join(BASE, "tmp")
+    env["GRADLE_USER_HOME"] = cfg.GRADLE_USER_HOME
+    if RO_DEP_CACHE:
+        env["GRADLE_RO_DEP_CACHE"] = RO_DEP_CACHE
+    env["TMP"] = cfg.TMP
+    env["TEMP"] = cfg.TMP
     os.makedirs(env["GRADLE_USER_HOME"], exist_ok=True)
     os.makedirs(env["TMP"], exist_ok=True)
-    env["PATH"] = os.path.join(JAVA_HOME, "bin") + os.pathsep + env.get("PATH", "")
+    env["PATH"] = os.path.join(jdk, "bin") + os.pathsep + env.get("PATH", "")
 
     # shell=True lets cmd.exe launch the .bat reliably (Windows cannot
     # CreateProcess a batch file directly); quoting keeps Chinese/spaced paths safe.

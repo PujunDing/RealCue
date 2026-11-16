@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Install the Android 15 x86_64 phone image and create the RealCue AVD.
 
-The system image archive is downloaded separately to runtime/downloads (or
-D:/paper/ifd-build/downloads during migration). This script verifies its SHA-1,
-extracts it into the project SDK, and writes a phone AVD without avdmanager.
+The ~1.7 GB system image archive is NOT in the repository. Place it in
+runtime/downloads, or point REALCUE_EXTRA_DOWNLOADS at a folder holding it.
+This script verifies its SHA-1, extracts it into the project SDK, and writes a
+phone AVD without avdmanager.
 """
 import hashlib
 import os
@@ -15,10 +16,13 @@ import zipfile
 sys.stdout.reconfigure(encoding="utf-8")
 
 BASE = Path(__file__).resolve().parent
-SDK = BASE / "android"
-DL = BASE / "downloads"
-FALLBACK_DL = Path(r"D:\paper\ifd-build\downloads")
-AVD_HOME = BASE / "avd"
+sys.path.insert(0, str(BASE))
+import env_config as cfg  # noqa: E402  (machine-specific paths live here)
+
+SDK = Path(cfg.SDK)
+DL = Path(cfg.DL)
+FALLBACK_DL = Path(cfg.EXTRA_DOWNLOADS) if cfg.EXTRA_DOWNLOADS else None
+AVD_HOME = Path(cfg.AVD_HOME)
 AVD_ID = "RealCue_API35"
 IMAGE_DIR = SDK / "system-images" / "android-35" / "google_apis" / "x86_64"
 ZIP_NAME = "x86_64-35_r09.zip"
@@ -80,10 +84,19 @@ def log(message):
 
 
 def find_archive():
-    for path in (DL / ZIP_NAME, FALLBACK_DL / ZIP_NAME):
+    candidates = [DL / ZIP_NAME]
+    if FALLBACK_DL:
+        candidates.append(FALLBACK_DL / ZIP_NAME)
+    for path in candidates:
         if path.is_file():
             return path
-    raise FileNotFoundError("Missing %s in %s or %s" % (ZIP_NAME, DL, FALLBACK_DL))
+    raise FileNotFoundError(
+        "Missing %s. Looked in: %s\n"
+        "Install the phone system image with:\n"
+        "  sdkmanager \"system-images;android-35;google_apis;x86_64\"\n"
+        "then place %s in runtime/downloads (or set REALCUE_EXTRA_DOWNLOADS "
+        "to a folder that already holds it). See ENVIRONMENT_SETUP.md."
+        % (ZIP_NAME, ", ".join(str(p) for p in candidates), ZIP_NAME))
 
 
 def sha1(path):

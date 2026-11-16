@@ -1,4 +1,17 @@
-# Copy to sdk.local.properties (ignored by Git) after building the SDK release AAR.
-# Used only with -PinspirefaceSdkSource=local; normal builds resolve JitPack.
-# Absolute paths or paths relative to this project's root are supported.
-aarPath=/path/to/inspireface-android-sdk/inspireface/build/outputs/aar/inspireface-release.aar
+# Copy to sdk.local.properties (ignored by Git).
+#
+# This file is read ONLY when building with -PinspirefaceSdkSource=local.
+# The default build resolves the SDK from JitPack instead and needs no AAR
+# (but does need network access on the first build).
+#
+# The COMPLETE InspireFace Android SDK 1.2.4.post1 AAR bundles the Pikachu /
+# Megatron model packs plus libInspireFace.so for arm64-v8a, armeabi-v7a
+# and x86_64. It is NOT in this repository (it is ~83 MB and gitignored via
+# *.aar). Obtain it from the upstream HyperInspire/inspireface-android-sdk
+# release / JitPack artifact, rename it to inspireface-1.2.4.post1.aar and
+# place it in runtime/downloads/ - then this default path just works.
+aarPath=../runtime/downloads/inspireface-1.2.4.post1.aar
+#
+# Absolute paths are also supported (escape the drive colon as \: for Java
+# Properties, use forward slashes):
+# aarPath=D\:/paper/RealCue/InspireFace-LocalRun/runtime/downloads/inspireface-1.2.4.post1.aar

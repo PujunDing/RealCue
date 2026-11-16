@@ -1,0 +1,16 @@
+# Copy this file to local.properties (ignored by Git) and edit it.
+# It tells AGP which Android SDK to compile against.
+#
+# Option A - self-contained SDK assembled by runtime/setup_env.py (recommended):
+#   Path is relative to the android-demo project root.
+sdk.dir=../runtime/android
+#
+# Option B - reuse an existing machine-wide Android SDK.
+#   Use forward slashes, and escape the drive colon as \: (Java Properties).
+# sdk.dir=C\:/Users/<you>/AppData/Local/Android/Sdk
+#
+# Notes:
+#   * setup_env.py writes this file automatically; you only need this template
+#     when configuring by hand.
+#   * The path MUST be pure ASCII. AGP 8.6.1 / aapt2 / Gradle test workers
+#     mangle non-ASCII paths on Windows. See ENVIRONMENT_SETUP.md.

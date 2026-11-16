@@ -14,14 +14,18 @@ import subprocess
 sys.stdout.reconfigure(encoding="utf-8")
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PROJECT = os.path.dirname(BASE)
+sys.path.insert(0, BASE)
+import env_config as cfg  # noqa: E402  (machine-specific paths live here)
+
+PROJECT = cfg.PROJECT
 APK = os.path.join(PROJECT, "android-demo", "app", "build", "outputs",
                    "apk", "debug", "app-debug.apk")
-GLOBAL_SDK = r"C:\Users\pjd02\AppData\Local\Android\Sdk"
-SDK = os.path.join(BASE, "android")
-EMU = os.path.join(GLOBAL_SDK, "emulator", "emulator.exe")
-ADB = os.path.join(SDK, "platform-tools", "adb.exe")
-AVD_HOME = os.path.join(BASE, "avd")
+GLOBAL_SDK = cfg.GLOBAL_SDK
+SDK = cfg.SDK
+EMU = cfg.EMU
+ADB = os.path.join(SDK, "platform-tools",
+                   "adb.exe" if os.name == "nt" else "adb")
+AVD_HOME = cfg.AVD_HOME
 AVD_ID = sys.argv[1] if len(sys.argv) > 1 else "RealCue_API35"
 LOGS = os.path.join(BASE, "logs")
 PKG = "com.example.inspireface_example"
@@ -67,6 +71,12 @@ def main():
 
     if not os.path.isfile(APK):
         log("ERROR: APK missing: " + APK)
+        log("Build it first: python runtime/run_gradle.py :app:assembleDebug")
+        return 2
+    if not os.path.isfile(EMU):
+        log("ERROR: emulator binary not found: " + EMU)
+        log("Set REALCUE_EMULATOR or install the emulator in your machine-wide "
+            "Android SDK. See ENVIRONMENT_SETUP.md.")
         return 2
 
     env = os.environ.copy()

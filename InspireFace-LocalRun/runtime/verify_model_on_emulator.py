@@ -24,20 +24,26 @@ import xml.etree.ElementTree as ET
 sys.stdout.reconfigure(encoding="utf-8")
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PROJECT = os.path.dirname(BASE)
-DEMO = os.path.join(PROJECT, "android-demo")
-SDK = os.path.join(BASE, "android")
-GLOBAL_SDK = r"C:\Users\pjd02\AppData\Local\Android\Sdk"
-EMU = os.path.join(GLOBAL_SDK, "emulator", "emulator.exe")
-ADB = os.path.join(SDK, "platform-tools", "adb.exe")
-GRADLE_BAT = os.path.join(BASE, "gradle", "gradle-8.7", "bin", "gradle.bat")
-JAVA_HOME = r"C:\Users\pjd02\.jdks\jbr-17.0.14"
-RO_DEP_CACHE = r"C:\Users\pjd02\.gradle\caches"
-GRADLE_USER_HOME = os.path.join(BASE, "gradle-home")
-AVD_HOME = os.path.join(BASE, "avd")
-AVD_ID = "RealCue_API35"
-LOGS = os.path.join(BASE, "logs")
-TMP = os.path.join(BASE, "tmp")
+sys.path.insert(0, BASE)
+import env_config as cfg  # noqa: E402  (single source of truth for local paths)
+
+# Keep these module-level names: run_gradle.py and calibrate_threshold.py
+# import this module and reuse v.GRADLE_BAT / v.DEMO / v.make_env() / v.LOGS.
+PROJECT = cfg.PROJECT
+DEMO = cfg.DEMO
+SDK = cfg.SDK
+GLOBAL_SDK = cfg.GLOBAL_SDK
+EMU = cfg.EMU
+ADB = os.path.join(SDK, "platform-tools",
+                   "adb.exe" if os.name == "nt" else "adb")
+GRADLE_BAT = cfg.GRADLE_BAT
+JAVA_HOME = cfg.JAVA_HOME
+RO_DEP_CACHE = cfg.RO_DEP_CACHE
+GRADLE_USER_HOME = cfg.GRADLE_USER_HOME
+AVD_HOME = cfg.AVD_HOME
+AVD_ID = cfg.AVD_ID
+LOGS = cfg.LOGS
+TMP = cfg.TMP
 DEFAULT_TEST_CLASS = "com.example.inspireface_example.view.ModelFeasibilityTest"
 TEST_CLASS = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_TEST_CLASS
 
@@ -60,20 +66,24 @@ def run(cmd, timeout=180, env=None):
 
 
 def make_env():
+    jdk = cfg.require_jdk()  # fails early with an actionable JDK 17 message
     env = os.environ.copy()
     env["ANDROID_HOME"] = SDK
     env["ANDROID_SDK_ROOT"] = SDK
     env["ANDROID_EMULATOR_HOME"] = AVD_HOME
     env["ANDROID_AVD_HOME"] = AVD_HOME
-    env["JAVA_HOME"] = JAVA_HOME
+    env["JAVA_HOME"] = jdk
     env["GRADLE_USER_HOME"] = GRADLE_USER_HOME
-    env["GRADLE_RO_DEP_CACHE"] = RO_DEP_CACHE
+    # Reuse an existing C: dependency cache read-only when available; never
+    # create one, so a fresh machine simply uses GRADLE_USER_HOME instead.
+    if RO_DEP_CACHE:
+        env["GRADLE_RO_DEP_CACHE"] = RO_DEP_CACHE
     env["TMP"] = TMP
     env["TEMP"] = TMP
     env["LOCALAPPDATA"] = os.path.join(TMP, "local-appdata")
     for path in (GRADLE_USER_HOME, TMP, env["LOCALAPPDATA"]):
         os.makedirs(path, exist_ok=True)
-    env["PATH"] = os.path.join(JAVA_HOME, "bin") + os.pathsep + env.get("PATH", "")
+    env["PATH"] = os.path.join(jdk, "bin") + os.pathsep + env.get("PATH", "")
     return env
 
 
@@ -83,6 +93,13 @@ def main():
     emu_log = os.path.join(LOGS, "model-emulator-%s.log" % stamp)
     gradle_log = os.path.join(LOGS, "model-gradle-%s.log" % stamp)
     env = make_env()
+
+    if not os.path.isfile(EMU):
+        log("FAIL: emulator binary not found: %s" % EMU)
+        log("Install the Android emulator in your machine-wide SDK, or set "
+            "REALCUE_EMULATOR to the full path of emulator.exe. "
+            "See ENVIRONMENT_SETUP.md.")
+        return 2
 
     log("=== launching RealCue_API35 for instrumented model tests ===")
     emu_cmd = [EMU, "-avd", AVD_ID, "-no-window", "-no-audio", "-no-metrics",
