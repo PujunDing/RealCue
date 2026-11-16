@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RealCue · 阶段 B 人物自动编号落地报告</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --ink2:#4b5563; --ink3:#6b7280;
+    --line:#e5e9f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669;
+    --warn:#d97706; --danger:#dc2626; --soft:#eef2ff; --soft2:#ecfeff;
+    --oksoft:#ecfdf5; --warnsoft:#fffbeb; --dangersoft:#fef2f2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 20px 72px}
+  header{background:linear-gradient(135deg,#4f46e5 0%,#0ea5e9 100%);
+    color:#fff;border-radius:18px;padding:30px 32px;box-shadow:0 10px 30px rgba(79,70,229,.18)}
+  header .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  header h1{margin:8px 0 6px;font-size:27px;line-height:1.3}
+  header p{margin:0;opacity:.92;font-size:14px}
+  .tagrow{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+    padding:4px 11px;border-radius:999px;font-size:12px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 26px;margin-top:18px;box-shadow:0 2px 8px rgba(16,24,40,.04)}
+  h2{font-size:19px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+    border-radius:8px;background:var(--soft);color:var(--brand);font-size:14px;font-weight:700}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--ink)}
+  p{margin:8px 0}
+  .lead{background:var(--soft);border-left:4px solid var(--brand);border-radius:10px;
+    padding:14px 16px;font-size:15px}
+  .lead strong{color:var(--brand)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fcfdff}
+  .stat .v{font-size:24px;font-weight:750;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--ink3);margin-top:2px}
+  .stat.ok .v{color:var(--ok)} .stat.brand .v{color:var(--brand)}
+  .stat.warn .v{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:650;color:var(--ink2)}
+  td code,p code,li code,.mono{font-family:var(--mono);font-size:12.5px;
+    background:#f1f5f9;border-radius:4px;padding:1px 5px}
+  .yes{color:var(--ok);font-weight:650} .no{color:var(--danger);font-weight:650}
+  .half{color:var(--warn);font-weight:650}
+  .note{border-radius:10px;padding:12px 15px;margin-top:12px;font-size:13.5px}
+  .note.warn{background:var(--warnsoft);border:1px solid #fde68a}
+  .note.danger{background:var(--dangersoft);border:1px solid #fecaca}
+  .note.ok{background:var(--oksoft);border:1px solid #a7f3d0}
+  .note.info{background:var(--soft2);border:1px solid #a5f3fc}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:15px 17px;
+    overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.75;margin:12px 0 0}
+  pre .c{color:#94a3b8} pre .g{color:#86efac} pre .y{color:#fcd34d} pre .b{color:#7dd3fc}
+  ul{margin:8px 0;padding-left:22px} li{margin:5px 0}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0 0}
+  .steps li{counter-increment:s;position:relative;padding:10px 14px 10px 46px;
+    border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#fcfdff}
+  .steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:24px;height:24px;
+    border-radius:7px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  .foot{text-align:center;color:var(--ink3);font-size:12px;margin-top:26px}
+  .bar{height:9px;border-radius:99px;background:#e8edf5;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4f46e5,#0ea5e9)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:650}
+  .pill.ok{background:var(--oksoft);color:var(--ok)}
+  .pill.warn{background:var(--warnsoft);color:var(--warn)}
+  .pill.info{background:var(--soft);color:var(--brand)}
+  svg{display:block;width:100%;height:auto;margin:6px auto 0}
+  @media(max-width:600px){header{padding:22px}section{padding:18px 16px}.wrap{padding:16px 12px 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RealCue · InspireFace LocalRun · 2026-11-15</div>
+  <h1>阶段 B：人物自动编号主链路落地报告</h1>
+  <p>首次自动编号 P001/P002 · 离场重现沿用编号 · 库 ID 实时上框 —— 代码已改、已编译、已在模拟器实跑</p>
+  <div class="tagrow">
+    <span class="tag">B1 决策内核</span><span class="tag">B2 main/ 接入</span>
+    <span class="tag">B3 设备端重入</span><span class="tag">68/0/0 JVM 单测</span>
+    <span class="tag">APK 签名 Verifies</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">1</span>一句话结论</h2>
+  <div class="lead">
+    <strong>「离场再进来变成 ID 2」这个核心问题已经在代码层解决，并在设备端实跑验证通过。</strong>
+    实时框上的数字不再是短时 <code>track_id</code>，而是 FeatureHub 长期 <code>person_id</code>
+    渲染出的 <code>P001 / P002</code>；模拟「完全离场 → 会话重置 → 重新进入」后，实测仍命中
+    <code>P001</code>。<strong>但「准」这件事还没收口</strong>：当前阈值仍是启发式占位值，
+    必须先完成真机 B0 两个真人样本标定。
+  </div>
+  <div class="grid">
+    <div class="stat ok"><div class="v">3 / 3</div><div class="l">设备端重入用例通过</div></div>
+    <div class="stat ok"><div class="v">68 / 0</div><div class="l">JVM 单测 / 失败数</div></div>
+    <div class="stat brand"><div class="v">15 / 15</div><div class="l">PersonIdResolver 单测</div></div>
+    <div class="stat warn"><div class="v">占位</div><div class="l">阈值 T_match / T_new</div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>你之前问的三件事，现在的状态</h2>
+  <table>
+    <thead><tr><th style="width:26%">问题</th><th style="width:35%">调研阶段（附录 A/B）的回答</th><th>阶段 B 之后</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>人物库分配的 ID 能不能看到？</td>
+        <td>只能在 Face management / Face recognition / Face 1:1 页面看；<strong>实时框上仍是 <code>track_id</code></strong>。</td>
+        <td><span class="yes">✓ 实时框也能看到</span>：新增「人物自动编号」页面，多脸框直接标 <code>P001 / P002</code>，状态栏显示库大小；自动建档记录同步进「人脸管理」列表。</td>
+      </tr>
+      <tr>
+        <td>能不能比较准？</td>
+        <td>同一个人 7 种画面变体 7/7 命中 ID 1001，最低 0.9680；但只有一个样本，<strong>没有阈值标定</strong>。</td>
+        <td><span class="half">△ 结构就绪，数值仍不可信</span>：三区阈值 / 连续 miss 防误建档 / 同帧防串号都已实现并单测覆盖，但 <code>0.48 / 0.36</code> 只是占位值，真机准确率未知。</td>
+      </tr>
+      <tr>
+        <td>第一次 ID 1，离场回来变 ID 2？</td>
+        <td>定位为短时 <code>track_id</code>，人物库未接入实时流；给出 B0→B3 方案。</td>
+        <td><span class="yes">✓ 已修复并实跑</span>：<code>REENTRY_RESULT MATCHED(person=1, conf=1.0) expectedId=1</code>。</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">3</span>分层架构与改动</h2>
+  <p>刻意把「决策逻辑」和「SDK / Android」拆开，因为 <code>app/build.gradle</code> 只有 JUnit4，
+  没有 Robolectric / Mockito —— 纯 Java 类才能把边界条件穷尽覆盖。</p>
+  <svg viewBox="0 0 680 372" role="img" aria-label="阶段 B 分层架构图">
+    <rect x="0" y="0" width="680" height="372" fill="#f5f7fb" rx="12"/>
+    <!-- lane labels -->
+    <text x="14" y="20" font-family="sans-serif" font-size="11" fill="#6b7280">数据流（自上而下，全部在 CameraX 单个 analysis executor 上）</text>
+
+    <rect x="40" y="32" width="600" height="44" rx="10" fill="#e0e7ff" stroke="#c7d2fe"/>
+    <text x="340" y="59" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#3730a3">CameraX 实时帧 → UprightFaceCameraAnalyzer（YUV_420_888 → NV21 → 预旋转 upright）</text>
+
+    <rect x="40" y="88" width="600" height="44" rx="10" fill="#e0f2fe" stroke="#bae6fd"/>
+    <text x="340" y="115" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#075985">AutoIdFaceAnalyzer：逐脸稳定门控（trackCount ≥ 3、脸宽 ≥ 12%）→ ExtractFaceFeature（512 维）</text>
+
+    <rect x="40" y="144" width="360" height="52" rx="10" fill="#ede9fe" stroke="#ddd6fe"/>
+    <text x="220" y="166" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#5b21b6">PersonIdResolver&lt;F,C&gt;（纯 Java）</text>
+    <text x="220" y="184" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#6d28d9">三区阈值 · TTL · 同帧防串号 · 连续 3 miss 建档</text>
+
+    <rect x="430" y="144" width="210" height="52" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="535" y="166" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#065f46">FaceRepository / FeatureHub</text>
+    <text x="535" y="184" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#047857">持久化 · next_id 自增 · HUB_LOCK</text>
+
+    <line x1="400" y1="170" x2="430" y2="170" stroke="#94a3b8" stroke-width="2"/>
+    <polygon points="430,170 422,166 422,174" fill="#94a3b8"/>
+    <polygon points="400,170 408,166 408,174" fill="#94a3b8"/>
+    <text x="415" y="160" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#64748b">查库 / 建档</text>
+
+    <rect x="40" y="208" width="600" height="44" rx="10" fill="#fef3c7" stroke="#fde68a"/>
+    <text x="340" y="235" text-anchor="middle" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#92400e">决策：MATCHED（沿用库 ID） / PENDING（灰色区继续采样） / ENROLLED（懒生成对齐 crop + insert）</text>
+
+    <rect x="40" y="264" width="600" height="44" rx="10" fill="#dcfce7" stroke="#86efac"/>
+    <text x="340" y="291" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#166534">TrackIdOverlayView.submitLabels() → 框上直接显示 P001 / P002</text>
+
+    <rect x="40" y="320" width="600" height="38" rx="10" fill="#ffffff" stroke="#e5e9f0"/>
+    <text x="340" y="344" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#4b5563">AutoIdActivity 新页面 + 首页入口卡片 + 「重置会话（保留人物库）」按钮</text>
+  </svg>
+
+  <h3>B1 · 决策内核</h3>
+  <table>
+    <thead><tr><th style="width:44%">文件</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td><code>face/PersonIdResolver.java</code></td><td>泛型纯逻辑类：<code>beginFrame()</code> 清过期绑定 + 同帧互斥、三区阈值、<code>DEFAULT_MISSES_TO_ENROLL=3</code>、<code>DEFAULT_TRACK_TTL_MS=2000</code>、<code>touch()</code> 保活、<code>clear()</code> 只清内存不清库、<code>formatLabel()</code> → <code>P%03d</code>。</td></tr>
+      <tr><td><code>test/.../PersonIdResolverTest.java</code></td><td>15 项 JVM 单测，<code>FakeGallery</code> 注入，覆盖空库 / 灰色区 / 命中 / 防串号 / TTL 重绑 / 建档失败重试 / NaN / null / 无候选 / 双人不同 ID / 阈值配置 / touch 跨 TTL / 标签格式化 / 构造防御。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>B2 · 生产侧接入（<code>main/</code> 源码，此前官方 Demo 一行未改）</h3>
+  <table>
+    <thead><tr><th style="width:44%">文件</th><th>改动</th></tr></thead>
+    <tbody>
+      <tr><td><code>view/FaceEngine.java</code></td><td>新增 <code>createAutoIdVideoSession(int maxFaces)</code>：<code>enableRecognition(true)</code> + 最多 10 脸；保留原单脸方法兼容旧页面。</td></tr>
+      <tr><td><code>view/TrackIdOverlayView.java</code></td><td><code>int[] trackIds</code> → <code>String[] labels</code>，新增 <code>submitLabels()</code>；保留旧 <code>submit(int[])</code> 转 <code>"ID n"</code>，<code>FaceDetectionActivity</code> 无需改。</td></tr>
+      <tr><td><code>view/AutoIdFaceAnalyzer.java</code></td><td>核心：逐脸提特征 → resolver → 命中/自动建档（<code>GetFaceAlignmentImage()</code> 懒生成 crop + <code>FaceRepository.insert()</code>）→ P00x 标签；320ms 节流、<code>resetSession()</code>、<code>configureThresholds()</code>、状态回调。</td></tr>
+      <tr><td><code>AutoIdActivity.java</code> + 布局 / 资源 / Manifest / Home</td><td>首页新增「人物自动编号」入口、状态文字、重置按钮，中英文文案，<code>exported=false</code> 注册。</td></tr>
+    </tbody>
+  </table>
+  <div class="note info"><strong>单线程约束：</strong>Session / ImageStream / FeatureHub 全程留在同一个 CameraX analysis executor 上。FeatureHub 是进程级单例且有 <code>HUB_LOCK</code>，切线程会踩 native 生命周期问题。</div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>设备端离场重入实测（用户最初诉求）</h2>
+  <p><code>AutoIdReentryTest</code> 在 <code>RealCue_API35(AVD) - 15</code> 上 3/3 通过，
+  <code>connectedDebugAndroidTest</code> → <code>BUILD SUCCESSFUL in 46s</code>，
+  XML <code>tests="3" failures="0" errors="0" skipped="0"</code>。</p>
+  <pre><span class="c"># SETUP 证明走的是真实 native 特征 + 真实 FeatureHub，不是 mock 分数</span>
+<span class="b">SETUP</span> featureLen=512 recommendedThreshold=0.48
+
+<span class="c"># 空库不会单帧就建档：连续观察 3 次才 ENROLLED</span>
+<span class="y">ENROLL_STEP</span> i=0 -&gt; PENDING(person=-1, conf=-Infinity)
+<span class="y">ENROLL_STEP</span> i=1 -&gt; PENDING(person=-1, conf=-Infinity)
+<span class="y">ENROLL_STEP</span> i=2 -&gt; <span class="g">ENROLLED(person=1, conf=-Infinity)</span>
+
+<span class="c"># ★ 完全离场（会话重置）→ 重新进入，仍沿用同一个 P001</span>
+<span class="g">REENTRY_RESULT MATCHED(person=1, conf=1.0) expectedId=1</span>
+
+<span class="c"># 两个不同身份拿到不同编号；同帧互斥防串号；B 再出现仍回 P002</span>
+<span class="b">TWO_IDS</span> idA=1 idB=2 enrollCalls=2
+<span class="b">SAME_FRAME</span> a=MATCHED(person=1, conf=1.0) b=SKIPPED(person=-1, conf=1.0)
+<span class="b">B_AGAIN</span>   MATCHED(person=2, conf=1.0)
+
+<span class="c"># 关库重开 + 全新 Resolver，持久化人物库仍命中</span>
+<span class="g">AFTER_RESTART MATCHED(person=1, conf=1.0) expectedId=1</span></pre>
+  <div class="note ok"><strong>对用户诉求的直接回答：</strong>以前框上是 <code>ID 1 → ID 2</code>（短时 track_id 重新计数）；现在是 <code>P001 → P001</code>（长期 person_id 从库里查回来）。会话重置只清内存绑定，人物库持久化保留 —— 这正是「离场重现沿用编号」的机制。</div>
+</section>
+
+<section>
+  <h2><span class="n">5</span>全量验证闸门（全部落盘可复查）</h2>
+  <table>
+    <thead><tr><th style="width:34%">闸门</th><th style="width:30%">结果</th><th>证据</th></tr></thead>
+    <tbody>
+      <tr><td>全量 JVM 单测</td><td><span class="yes">68 tests / 0 failures / 0 errors / 1 skipped</span></td><td><code>app/build/test-results/testDebugUnitTest/TEST-*.xml</code></td></tr>
+      <tr><td>PersonIdResolver 单测</td><td><span class="yes">15 / 15 通过</span></td><td>同上，<code>TEST-...face.PersonIdResolverTest.xml</code></td></tr>
+      <tr><td><code>assembleDebug</code> / <code>assembleDebugAndroidTest</code></td><td><span class="yes">成功</span></td><td><code>runtime/run_gradle.py</code> gate</td></tr>
+      <tr><td><code>connectedDebugAndroidTest</code></td><td><span class="yes">3/3 通过 · 46s</span></td><td><code>model-gradle-20261115-213010.log</code>、设备端 XML</td></tr>
+      <tr><td>APK 静态验证（<code>aapt2</code>）</td><td><span class="yes">通过</span></td><td>117,604,366 B、<code>versionCode=2 / 1.0.1</code>、<code>targetSdk 35</code>、CAMERA 权限、<strong>AutoIdActivity 已注册</strong>（xmltree line=65）</td></tr>
+      <tr><td>APK 签名验证（<code>apksigner</code>）</td><td><span class="yes">Verifies</span></td><td>v2 scheme true，1 signer（Android Debug / RSA 2048）</td></tr>
+    </tbody>
+  </table>
+  <div class="note info">完整输出见 <code>runtime/logs/stageB-apk-verify.txt</code>；
+  设备端 logcat 见 <code>runtime/logs/model-logcat-20261115-213010.txt</code>。</div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>准确性边界 —— 哪些还不能说「准」</h2>
+  <div class="note danger"><strong>请勿把本报告当成「算法已经准了」的证明。</strong>下面 5 条任意一条没解决，真机上就可能出现误接受（认错人）或误建档（同一个人被分成两个 P00x）。</div>
+  <ol class="steps">
+    <li><strong>阈值未标定。</strong><code>T_match=0.48</code> 取 SDK 推荐值，<code>T_new=0.36</code> 是 <code>0.48 − B0 newDelta</code> 的启发式 delta；源码注释明确写了 <em>NOT measured values: B0 has not yet collected two real human subjects</em>。<code>runtime/calibration/A|B/</code> 仍是空模板。</li>
+    <li><strong>灰色区在生产线不可达。</strong><code>FaceRepository.open()</code> 把 FeatureHub 搜索阈值设成推荐值，低分候选在进入 resolver 前就被过滤，resolver 实际只见到「高分命中 / 无候选」。要三区完整生效，需 B0 后让该阈值可配置或改查 TopK 原始结果（连续 miss 规则已能防单帧误建档）。</li>
+    <li><strong>B3 的「第二个人」是合成向量</strong>（<code>-realFeature.data</code>），只用于验证分支与防串号，<span class="no">不是真人异人分数，禁止用于阈值标定</span>。</li>
+    <li><strong>验证环境是模拟器。</strong>静态样本 + 合成向量；真机实时帧、多人同框、帧率、最终准确率都还没测。</li>
+    <li><strong>confidence 1.0 是「同一张脸自比对」。</strong>设备端用的是同一特征或其变体，不代表真机跨帧 / 跨光照也能到 1.0。</li>
+  </ol>
+  <h3>完成度</h3>
+  <div style="font-size:13px;color:var(--ink2)">工程链路（编译 / 单测 / 设备端重入 / APK 可安装） <span class="pill ok" style="float:right">100%</span></div>
+  <div class="bar"><i style="width:100%"></i></div>
+  <div style="font-size:13px;color:var(--ink2);margin-top:12px">阈值与真人准确率（B0 真人标定 / 真机 A·B·C 验证） <span class="pill warn" style="float:right">未收口</span></div>
+  <div class="bar"><i style="width:8%;background:linear-gradient(90deg,#d97706,#f59e0b)"></i></div>
+</section>
+
+<section>
+  <h2><span class="n">7</span>在真机上看效果</h2>
+  <ol class="steps">
+    <li>把 <code>app/build/outputs/apk/debug/app-debug.apk</code>（约 112 MB，签名合法）传到 Xiaomi 14 Pro 并安装。</li>
+    <li>打开首页新增的 <strong>「人物自动编号 / Auto Person ID」</strong> 卡片。</li>
+    <li>露出人脸，稳定约 1 秒后框上出现 <code>P001</code>；第二个人进入画面得到 <code>P002</code>。</li>
+    <li>让 A 完全离开画面，再回来 —— 应仍是 <code>P001</code>（不是 <code>P003</code>）。页面下方「重置会话（保留人物库）」按钮可主动模拟完全离场。</li>
+    <li>自动建档的记录可在「人脸管理 / Face management」列表里看到对应 ID 与 crop。</li>
+  </ol>
+  <div class="note warn">页面里已内置诚实提示：「当前阈值为启发式默认值（B0 真人标定尚未完成）」。真机若出现误认或重复建档，属于第 6 节列出的已知边界，不是编译/接线 bug。</div>
+</section>
+
+<section>
+  <h2><span class="n">8</span>下一步优先级</h2>
+  <table>
+    <thead><tr><th style="width:8%">#</th><th style="width:34%">动作</th><th>为什么</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>真机 B0 阈值标定</strong></td><td>唯一阻塞准确率的实验：两个真人各 3~5 张，跑 <code>python runtime/calibrate_threshold.py</code>，拿到 <code>separable=true / margin&gt;0</code> 后用 <code>configureThresholds()</code> 回填。</td></tr>
+      <tr><td>2</td><td><strong>真机实时流 A/B/C 验证</strong></td><td>A 进场→离场→重入、A+B 同框、光照 / 角度 / 距离变化，记录帧率与误认。</td></tr>
+      <tr><td>3</td><td>让 FeatureHub 搜索阈值可配置</td><td>让三区中的灰色区在生产线真正可达，而不是被底层过滤。</td></tr>
+      <tr><td>4</td><td>去重 / 合并策略</td><td>自动建档复用 <code>next_id</code> 自增序列，长时间运行会累积库记录。</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">9</span>产物与证据清单</h2>
+  <table>
+    <thead><tr><th style="width:52%">文件</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td><code>main/.../face/PersonIdResolver.java</code></td><td>纯 Java 决策内核</td></tr>
+      <tr><td><code>test/.../face/PersonIdResolverTest.java</code></td><td>15 项 JVM 单测</td></tr>
+      <tr><td><code>main/.../view/AutoIdFaceAnalyzer.java</code></td><td>生产侧逐脸接入（含已知限制注释）</td></tr>
+      <tr><td><code>AutoIdActivity.java</code> + 布局 / 资源 / Manifest / Home 入口</td><td>用户可见页面</td></tr>
+      <tr><td><code>main/.../view/FaceEngine.java</code> / <code>TrackIdOverlayView.java</code></td><td>多脸 Session / 字符串标签渲染扩展</td></tr>
+      <tr><td><code>androidTest/.../view/AutoIdReentryTest.java</code></td><td>3 项设备端重入测试</td></tr>
+      <tr><td><code>runtime/logs/model-gradle-20261115-213010.log</code></td><td>connectedAndroidTest 构建日志</td></tr>
+      <tr><td><code>runtime/logs/model-logcat-20261115-213010.txt</code></td><td>设备端 <code>RealCueAutoIdReentry</code> 关键行</td></tr>
+      <tr><td><code>runtime/logs/stageB-apk-verify.txt</code></td><td>aapt2 badging / xmltree + apksigner verify 输出</td></tr>
+      <tr><td><code>LocalRun-Plan.md</code> 末章</td><td>阶段 B 完整落地记录与边界</td></tr>
+      <tr><td><code>Research-PersonGallery-Matching.md</code> 附录 D</td><td>三个原始问题的当前状态对照</td></tr>
+      <tr><td><code>StageB-AutoId-Report.html</code></td><td>本报告（自包含，可单独打开 / 传手机）</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="foot">RealCue · 阶段 B 落地报告 · 生成于 2026-11-15 · 数据均来自本机实跑产物</div>
+</div>
+</body>
+</html>

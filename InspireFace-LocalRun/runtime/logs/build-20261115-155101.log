@@ -1,0 +1,53 @@
+CMD: "D:\paper\RealCue\InspireFace-LocalRun\runtime\gradle\gradle-8.7\bin\gradle.bat" --no-daemon -p "D:\paper\RealCue\InspireFace-LocalRun\android-demo" -PinspirefaceSdkSource=local -Pandroid.overridePathCheck=true :app:assembleDebug :app:testDebugUnitTest
+
+
+Welcome to Gradle 8.7!
+
+Here are the highlights of this release:
+ - Compiling and testing with Java 22
+ - Cacheable Groovy script compilation
+ - New methods in lazy collection properties
+
+For more details see https://docs.gradle.org/8.7/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig
+> Task :app:javaPreCompileDebug
+> Task :app:checkDebugAarMetadata
+> Task :app:checkDebugAarMetadata FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:checkDebugAarMetadata'.
+> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
+   > Failed to transform vectordrawable-1.1.0.aar (androidx.vectordrawable:vectordrawable:1.1.0) to match attributes {artifactType=android-aar-metadata, org.gradle.category=library, org.gradle.libraryelements=jar, org.gradle.status=release, org.gradle.usage=java-runtime}.
+      > Could not download vectordrawable-1.1.0.aar (androidx.vectordrawable:vectordrawable:1.1.0)
+         > Could not get resource 'https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar'.
+            > D:\paper\RealCue\InspireFace-LocalRun\runtime\gradle-home\.tmp\gradle_download15375418341382836936bin (�ܾ����ʡ�)
+   > Failed to transform vectordrawable-1.1.0.aar (androidx.vectordrawable:vectordrawable:1.1.0) to match attributes {artifactType=android-aar-metadata, org.gradle.category=library, org.gradle.status=release}.
+      > Could not download vectordrawable-1.1.0.aar (androidx.vectordrawable:vectordrawable:1.1.0)
+         > Could not get resource 'https://dl.google.com/dl/android/maven2/androidx/vectordrawable/vectordrawable/1.1.0/vectordrawable-1.1.0.aar'.
+            > D:\paper\RealCue\InspireFace-LocalRun\runtime\gradle-home\.tmp\gradle_download15375418341382836936bin (�ܾ����ʡ�)
+   > Failed to transform viewpager-1.0.0.aar (androidx.viewpager:viewpager:1.0.0) to match attributes {artifactType=android-aar-metadata, org.gradle.category=library, org.gradle.libraryelements=jar, org.gradle.status=release, org.gradle.usage=java-runtime}.
+      > Could not download viewpager-1.0.0.aar (androidx.viewpager:viewpager:1.0.0)
+         > Could not get resource 'https://dl.google.com/dl/android/maven2/androidx/viewpager/viewpager/1.0.0/viewpager-1.0.0.aar'.
+            > D:\paper\RealCue\InspireFace-LocalRun\runtime\gradle-home\.tmp\gradle_download12670225996741039743bin (�ܾ����ʡ�)
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3m 48s
+3 actionable tasks: 3 executed

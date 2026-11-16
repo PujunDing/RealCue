@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RealCue · 统一长期人物编号报告</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --ink2:#4b5563; --ink3:#6b7280;
+    --line:#e5e9f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669;
+    --warn:#d97706; --danger:#dc2626; --soft:#eef2ff; --soft2:#ecfeff;
+    --oksoft:#ecfdf5; --warnsoft:#fffbeb; --dangersoft:#fef2f2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 20px 72px}
+  header{background:linear-gradient(135deg,#4f46e5 0%,#0ea5e9 100%);
+    color:#fff;border-radius:18px;padding:30px 32px;box-shadow:0 10px 30px rgba(79,70,229,.18)}
+  header .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  header h1{margin:8px 0 6px;font-size:27px;line-height:1.3}
+  header p{margin:0;opacity:.92;font-size:14px}
+  .tagrow{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+    padding:4px 11px;border-radius:999px;font-size:12px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 26px;margin-top:18px;box-shadow:0 2px 8px rgba(16,24,40,.04)}
+  h2{font-size:19px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+    border-radius:8px;background:var(--soft);color:var(--brand);font-size:14px;font-weight:700}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--ink)}
+  p{margin:8px 0}
+  .lead{background:var(--soft);border-left:4px solid var(--brand);border-radius:10px;
+    padding:14px 16px;font-size:15px}
+  .lead strong{color:var(--brand)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fcfdff}
+  .stat .v{font-size:24px;font-weight:750;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--ink3);margin-top:2px}
+  .stat.ok .v{color:var(--ok)} .stat.brand .v{color:var(--brand)}
+  .stat.warn .v{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:650;color:var(--ink2)}
+  td code,p code,li code,.mono{font-family:var(--mono);font-size:12.5px;
+    background:#f1f5f9;border-radius:4px;padding:1px 5px}
+  .yes{color:var(--ok);font-weight:650} .no{color:var(--danger);font-weight:650}
+  .half{color:var(--warn);font-weight:650}
+  .note{border-radius:10px;padding:12px 15px;margin-top:12px;font-size:13.5px}
+  .note.warn{background:var(--warnsoft);border:1px solid #fde68a}
+  .note.danger{background:var(--dangersoft);border:1px solid #fecaca}
+  .note.ok{background:var(--oksoft);border:1px solid #a7f3d0}
+  .note.info{background:var(--soft2);border:1px solid #a5f3fc}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:15px 17px;
+    overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.75;margin:12px 0 0}
+  pre .c{color:#94a3b8} pre .g{color:#86efac} pre .y{color:#fcd34d} pre .b{color:#7dd3fc}
+  ul{margin:8px 0;padding-left:22px} li{margin:5px 0}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0 0}
+  .steps li{counter-increment:s;position:relative;padding:10px 14px 10px 46px;
+    border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#fcfdff}
+  .steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:24px;height:24px;
+    border-radius:7px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  .foot{text-align:center;color:var(--ink3);font-size:12px;margin-top:26px}
+  .bar{height:9px;border-radius:99px;background:#e8edf5;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4f46e5,#0ea5e9)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:650}
+  .pill.ok{background:var(--oksoft);color:var(--ok)}
+  .pill.warn{background:var(--warnsoft);color:var(--warn)}
+  .pill.info{background:var(--soft);color:var(--brand)}
+  svg{display:block;width:100%;height:auto;margin:6px auto 0}
+  @media(max-width:600px){header{padding:22px}section{padding:18px 16px}.wrap{padding:16px 12px 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RealCue · Unified Stable Person ID</div>
+  <h1>把每一处编号都改成长期人物编号</h1>
+  <p>图片、视频、人物库、识别详情统一显示 <code style="color:#fff">P001</code>；同一张脸离场再进来不再变成 ID 2。</p>
+  <div class="tagrow">
+    <span class="tag">2026-11-16</span>
+    <span class="tag">main/ 业务源码已改</span>
+    <span class="tag">设备端 4/4 通过</span>
+    <span class="tag">APK 重新构建 · 需重装</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">1</span>一句话结论</h2>
+  <div class="lead">
+    <strong>你截图里那个「人脸跟踪」页已经被改掉了</strong>，不用再去找首页新增的
+    「人物自动编号」卡片。视频框和图片框上的数字现在都来自 FeatureHub 的长期
+    <code>person_id</code>，不再是短时 <code>track_id</code> 或数组下标；
+    人物库列表和识别命中详情也统一成 <code>P001</code>，口径一致。
+  </div>
+  <div class="grid">
+    <div class="stat brand"><div class="v">P001</div><div class="l">统一后的编号格式</div></div>
+    <div class="stat ok"><div class="v">4 / 4</div><div class="l">新增设备端用例通过</div></div>
+    <div class="stat ok"><div class="v">68 / 0</div><div class="l">JVM 单测 / 失败数</div></div>
+    <div class="stat ok"><div class="v">0.985</div><div class="l">换画面后同人重入置信度</div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>为什么之前的做法没解决你的问题</h2>
+  <p>你发来的三张截图中，同一张脸在「退出 → 进入」后依次标成 <code>ID 4</code>、
+  <code>ID 7</code>、<code>ID 6</code>。画面顶部是 <code>模型 · Megatron</code>、底部是
+  「跟踪 Session 参数 · Light 轻量跟踪」，可以确认你用的是<strong>官方 Demo 原有的
+  人脸跟踪页</strong>（<code>FaceDetectionActivity</code> 的视频跟踪 tab），
+  不是新加的 <code>AutoIdActivity</code>。</p>
+  <table>
+    <tr><th>层面</th><th>当时的实现</th><th>结果</th></tr>
+    <tr><td>阶段 B 新页面</td><td><code>AutoIdFaceAnalyzer</code> → <code>P001</code></td><td class="yes">正确，但你没在用</td></tr>
+    <tr><td>你在用的视频页</td><td><code>TrackIdOverlayView.submit(int[] ids)</code> 里硬编码 <code>"ID " + ids[i]</code></td><td class="no">每次重建 Session 后重新编号</td></tr>
+    <tr><td>图片检测页</td><td><code>FaceImageOverlayView</code> 画 <code>1 / 2 / 3</code> 下标</td><td class="no">只是本张图内的序号</td></tr>
+    <tr><td>人物库 / 识别详情</td><td><code>ID · 1</code></td><td class="half">是库 ID，但和框上口径对不上</td></tr>
+  </table>
+  <div class="note info">你的原话是「<strong>所有的都要改，只要涉及到我说的这个不管是图片，视频也要改</strong>」。
+  所以这轮把「编号显示」当作一个横切问题统一处理，而不是再加一个入口让你自己去找。</div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>统一后的编号矩阵</h2>
+  <table>
+    <tr><th>位置</th><th>改动前</th><th>改动后</th></tr>
+    <tr><td>视频跟踪页框上徽章</td><td><code>ID 4</code> / <code>ID 7</code>（短时 <code>trackId</code>）</td><td class="yes"><code>P001</code>，离场重入沿用</td></tr>
+    <tr><td>图片检测页框上徽章</td><td><code>1</code> / <code>2</code> / <code>3</code>（数组下标）</td><td class="yes"><code>P001</code> / <code>P002</code></td></tr>
+    <tr><td>图片选中状态</td><td>Face 1 of 2 selected</td><td class="yes">P001 selected · 2 face(s) · 106 landmarks</td></tr>
+    <tr><td>人脸管理列表</td><td><code>ID · 1</code></td><td class="yes"><code>P001</code></td></tr>
+    <tr><td>人脸识别命中详情</td><td><code>ID · 1 · cosine …</code></td><td class="yes"><code>P001 · cosine … · threshold …</code></td></tr>
+    <tr><td>人物库搜索</td><td>只能按姓名 / 数字 ID</td><td class="yes">可直接搜 <code>P001</code> / <code>p001</code> / <code>1</code></td></tr>
+  </table>
+  <div class="note ok">框上看到 <code>P001</code> → 去人物库里就是 <code>P001</code> → 识别命中详情也是
+  <code>P001</code>。不再出现「框上 P001、库里 ID · 1」对不上号的情况。</div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>数据链路：两条入口，同一套决策</h2>
+  <svg viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="统一编号数据流">
+    <rect x="12" y="20" width="150" height="52" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="87" y="42" text-anchor="middle" font-size="13" font-weight="650" fill="#3730a3">图片检测 tab</text>
+    <text x="87" y="60" text-anchor="middle" font-size="11" fill="#4f46e5">Bitmap / 一次检测</text>
+    <rect x="12" y="92" width="150" height="52" rx="10" fill="#ecfeff" stroke="#a5f3fc"/>
+    <text x="87" y="114" text-anchor="middle" font-size="13" font-weight="650" fill="#0e7490">视频跟踪 tab</text>
+    <text x="87" y="132" text-anchor="middle" font-size="11" fill="#0891b2">CameraX 实时帧</text>
+
+    <path d="M162 46 L212 46 L212 79" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+    <path d="M162 118 L212 118 L212 90" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+    <path d="M212 84 L246 84" fill="none" stroke="#4f46e5" stroke-width="2" marker-end="url(#ar)"/>
+
+    <rect x="248" y="52" width="176" height="66" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text x="336" y="76" text-anchor="middle" font-size="13" font-weight="650" fill="#1f2937">recognition Session</text>
+    <text x="336" y="95" text-anchor="middle" font-size="11" fill="#475569">512 维特征 + 106 点 + crop</text>
+    <text x="336" y="110" text-anchor="middle" font-size="10.5" fill="#64748b">enableRecognition(true)</text>
+
+    <path d="M424 85 L458 85" fill="none" stroke="#4f46e5" stroke-width="2" marker-end="url(#ar)"/>
+    <rect x="460" y="42" width="208" height="86" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="564" y="65" text-anchor="middle" font-size="13" font-weight="650" fill="#3730a3">PersonIdResolver</text>
+    <text x="564" y="84" text-anchor="middle" font-size="11" fill="#4f46e5">三区阈值 · TTL · 同帧防串号</text>
+    <text x="564" y="101" text-anchor="middle" font-size="11" fill="#4f46e5">命中复用 / 连续 miss 才建档</text>
+    <text x="564" y="118" text-anchor="middle" font-size="10.5" fill="#64748b">纯 Java 内核，15 项 JVM 单测</text>
+
+    <path d="M564 128 L564 160" fill="none" stroke="#0ea5e9" stroke-width="2" marker-end="url(#ar2)"/>
+    <rect x="460" y="162" width="208" height="52" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="564" y="183" text-anchor="middle" font-size="13" font-weight="650" fill="#047857">FeatureHub / FaceRepository</text>
+    <text x="564" y="201" text-anchor="middle" font-size="11" fill="#059669">持久化 person_id，跨会话、跨重启</text>
+
+    <path d="M460 188 L300 188" fill="none" stroke="#0ea5e9" stroke-width="2" marker-end="url(#ar2)"/>
+    <rect x="120" y="162" width="178" height="52" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+    <text x="209" y="183" text-anchor="middle" font-size="13" font-weight="650" fill="#b45309">P001 标签</text>
+    <text x="209" y="201" text-anchor="middle" font-size="11" fill="#d97706">submitLabels / setFaceLabels</text>
+
+    <path d="M209 214 L209 244" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+    <rect x="12" y="246" width="656" height="42" rx="10" fill="#f8fafc" stroke="#e5e9f0"/>
+    <text x="340" y="272" text-anchor="middle" font-size="12" fill="#475569">视频框 · 图片框 · 选中状态 · 人脸管理列表 · 识别命中详情 · 库内搜索 —— 全部同一个 P001</text>
+
+    <defs>
+      <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0 0 L8 4 L0 8 z" fill="#4f46e5"/></marker>
+      <marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0 0 L8 4 L0 8 z" fill="#0ea5e9"/></marker>
+    </defs>
+  </svg>
+  <p style="font-size:13px;color:var(--ink3)">两条入口共用同一个 <code>FaceRepository</code>
+  （FeatureHub 是进程级单例，全程留在同一个 SDK 线程上，不跨线程切 native 生命周期）。
+  若库打不开，视频页会自动降级为原来的 <code>ID n</code>，不会把相机页面弄崩。</p>
+</section>
+
+<section>
+  <h2><span class="n">5</span>实际改了哪些文件</h2>
+  <table>
+    <tr><th>文件</th><th>改动</th></tr>
+    <tr><td><code>view/FaceEngine.java</code></td><td>新增 <code>createFaceTrackingSession(..., boolean enableRecognition)</code>，旧 4 参方法委托 <code>false</code>；保留用户可调的 detect mode / input px / max faces / min face px</td></tr>
+    <tr><td><code>view/FaceTrackingAnalyzer.java</code></td><td>重写为双模式：注入库时逐脸提特征 → <code>PersonIdResolver</code> → <code>submitLabels()</code> 显示 <code>P001</code>；保留 106 关键点、box smoother、Track ID 配色、FPS 与全部 Session 参数</td></tr>
+    <tr><td><code>FaceDetectionActivity.java</code></td><td>初始化并打开 <code>trackingGallery</code>；稳定模式构建 recognition Session；视频 tab 注入库；图片 tab 走新检测通路 + <code>resolveStableLabels()</code>；<code>onDestroy</code> 回收 crops / 关库</td></tr>
+    <tr><td><code>face/FaceImageProcessor.java</code></td><td>新增 <code>detectWithLandmarksAndFeatures()</code>：一次检测同时给 106 点 + 512 维特征 + 对齐 crop</td></tr>
+    <tr><td><code>widget/FaceImageOverlayView.java</code></td><td>新增 <code>setFaceLabels()</code>；badge 改圆角矩形，稳定模式 <code>P001</code>，legacy 仍 <code>1/2/3</code></td></tr>
+    <tr><td><code>face/FaceRepository.java</code></td><td><code>query()</code> 增加 <code>formatLabel(id)</code> 匹配，看到 P001 就能搜到</td></tr>
+    <tr><td><code>view/TrackIdOverlayView.java</code></td><td><code>String[] labels</code> + <code>submitLabels()</code>，保留旧 <code>submit(int[])</code> 兼容降级</td></tr>
+    <tr><td><code>res/values*/strings.xml</code></td><td>补 <code>detection_face_selected_stable</code>；<code>face_id_format</code> / <code>recognition_result_details</code> 由 <code>ID · %d</code> 改为 <code>P%03d</code>；检测页 / 首页中英文文案同步</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">6</span>顺手修掉的两个真问题</h2>
+  <div class="note danger"><strong>① 编译阻断</strong>：上一轮被总结请求打断时，
+  <code>FaceDetectionActivity.updateSelectionStatus()</code> 已经引用了
+  <code>R.string.detection_face_selected_stable</code>，但中英文 <code>strings.xml</code>
+  里都还没定义 —— 这个状态下 <code>compileDebugJavaWithJavac</code> 会直接失败。
+  已补齐，并用 <code>aapt2 dump resources</code> 确认中英实际值真的进了 APK。</div>
+  <div class="note warn"><strong>② 改 Session 参数后标签退化</strong>：
+  <code>rebuildSession()</code> 原来仍调 <code>detectWithLandmarks()</code>、不重算
+  <code>imageFaceLabels</code>、不调 <code>setFaceLabels()</code>，用户输入 px /
+  最大脸数一改，图片框就退回 <code>1/2/3</code> 或沿用错位的旧标签。
+  已改为稳定模式下走 <code>detectWithLandmarksAndFeatures()</code> +
+  <code>resolveStableLabels()</code> 回传 labels，并补上旧 crops 回收。</div>
+  <div class="note ok">编译闸门实测：<code>BUILD SUCCESSFUL in 33s</code>，
+  资源合并与 Java 编译都重新执行，不是 UP-TO-DATE 假通过。</div>
+</section>
+
+<section>
+  <h2><span class="n">7</span>设备端实测：4/4 通过</h2>
+  <p>新增 <code>androidTest/.../view/UnifiedStableIdTest.java</code>，在
+  <code>RealCue_API35</code> 上跑真实 <code>libInspireFace.so</code> + 真实 FeatureHub
+  （隔离存储，不是 mock），<code>BUILD SUCCESSFUL in 52s</code>，
+  XML <code>tests="4" failures="0" errors="0" skipped="0"</code>。</p>
+  <table>
+    <tr><th>用例</th><th>结论</th></tr>
+    <tr><td><code>stillImageDetectionProducesFeaturesCropsAnd106Landmarks</code></td><td class="yes"><code>faces=1 featureLen=512 crop=112x112 landmarks=106</code></td></tr>
+    <tr><td><code>detectionOnlySessionHasNoFeatureButRecognitionSessionDoes</code></td><td class="yes"><code>legacy_feature=null stable_featureLen=512</code>，证明切 Session 是必要的</td></tr>
+    <tr><td><code>leavingAndReturningReusesSameGalleryLabel</code></td><td class="yes">首次 <code>P001</code> → JPEG q70 + 亮度 +18 重新入场 → 仍 <code>P001</code>，<code>gallery=1</code> 不重复建档</td></tr>
+    <tr><td><code>gallerySearchAcceptsPersistentP001Label</code></td><td class="yes"><code>P001=1 p001=1 numeric=1 P999=0</code></td></tr>
+  </table>
+  <pre><span class="c"># logcat · RealCueUnified · RealCue_API35</span>
+SETUP featureLength=512 recommendedThreshold=0.48
+STILL_DETECT faces=1 featureLen=512 crop=112x112 landmarks=106
+SESSION_SWITCH legacy_feature=null stable_featureLen=512
+RESOLVE enrolled id=1 searchConfidence=NaN
+<span class="g">FIRST_APPEARANCE label=P001 gallery=1</span>
+<span class="y">RESOLVE matched id=1 confidence=0.9849746 threshold=0.48</span>
+<span class="g">REENTRY first=P001 second=P001 gallery=1</span>
+QUERY_LABEL P001=1 p001=1 numeric=1 P999=0
+run finished: 4 tests, 0 failed, 0 ignored</pre>
+  <h3>这条 0.9849746 为什么重要</h3>
+  <p>它不是「同一份特征跟自己比」得到的 1.0，而是<strong>同一个人换了一次成像条件</strong>
+  （JPEG 压缩 + 亮度变化）后重新提特征再查库得到的分数，且 <code>gallery=1</code>
+  证明没有因为重入而新建第二个身份。这正是你截图里「同一张脸却依次编号」的反面结果。</p>
+  <svg viewBox="0 0 680 118" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="同人重入置信度对比">
+    <text x="12" y="24" font-size="12" fill="#475569">同人重入查库余弦相似度</text>
+    <rect x="12" y="34" width="656" height="26" rx="6" fill="#eef2ff"/>
+    <rect x="12" y="34" width="656" height="26" rx="6" fill="url(#grad)" opacity="0.16"/>
+    <line x1="12" y1="34" x2="12" y2="60" stroke="#94a3b8" stroke-width="1"/>
+    <line x1="327" y1="30" x2="327" y2="64" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="331" y="78" font-size="11" fill="#d97706">推荐阈值 0.48</text>
+    <line x1="658" y1="30" x2="658" y2="64" stroke="#059669" stroke-width="2"/>
+    <text x="560" y="78" font-size="11" fill="#059669">实测 0.985</text>
+    <circle cx="658" cy="47" r="6" fill="#059669"/>
+    <text x="12" y="100" font-size="11" fill="#64748b">0.0</text>
+    <text x="640" y="100" font-size="11" fill="#64748b">1.0</text>
+    <defs><linearGradient id="grad" x1="0" x2="1"><stop offset="0" stop-color="#4f46e5"/><stop offset="1" stop-color="#0ea5e9"/></linearGradient></defs>
+  </svg>
+  <div class="note info">高出阈值约 0.505，但<strong>这只是同人稳定性</strong>；
+  异人分数分布仍然没测，不能据此说「已经很准」。</div>
+</section>
+
+<section>
+  <h2><span class="n">8</span>全量验证闸门</h2>
+  <table>
+    <tr><th>闸门</th><th>结果</th><th>产物</th></tr>
+    <tr><td><code>compileDebugJavaWithJavac</code></td><td class="yes">BUILD SUCCESSFUL in 33s</td><td><code>runtime/logs/gradle-app_compileDebugJavaWithJavac-20261115-222254.txt</code></td></tr>
+    <tr><td>全量 JVM 单测</td><td class="yes">68 tests / 0 failures / 0 errors / 1 skipped</td><td><code>app/build/test-results/testDebugUnitTest/TEST-*.xml</code></td></tr>
+    <tr><td><code>assembleDebug</code> / <code>assembleDebugAndroidTest</code></td><td class="yes">成功（18s / 15s）</td><td><code>runtime/logs/gradle-app_assembleDebug-20261115-222449.txt</code></td></tr>
+    <tr><td>设备端 <code>UnifiedStableIdTest</code></td><td class="yes">4/4 通过，52s</td><td><code>runtime/logs/model-gradle-20261115-222838.log</code></td></tr>
+    <tr><td>APK 静态 / 字符串实际值</td><td class="yes">targetSdk 35；<code>P%1$03d</code> 中英值进包</td><td><code>runtime/logs/unified-apk-verify.txt</code></td></tr>
+    <tr><td><code>apksigner verify --verbose</code></td><td class="yes"><code>Verifies</code>，v2 scheme true</td><td>同上</td></tr>
+    <tr><td>APK 结构 / ABI（最终交付包）</td><td class="yes"><strong>116,455,212 B</strong> · 9 dex · 935 entries · arm64-v8a / armeabi-v7a / x86_64</td><td><code>runtime/logs/rebuild-verify-20261116.txt</code></td></tr>
+    <tr><td><strong>强制全量重编译 <code>--rerun-tasks</code></strong></td><td class="yes"><code>BUILD SUCCESSFUL in 29s</code> · <code>65 actionable tasks: 65 executed</code>（全部 executed，无 UP-TO-DATE 复用）</td><td><code>runtime/logs/gradle---rerun-tasks-20261116-141428.txt</code></td></tr>
+    <tr><td>新包重装后设备端复测</td><td class="yes"><code>UnifiedStableIdTest</code> 4/4 通过 · <code>REENTRY first=P001 second=P001 gallery=1</code> · BUILD SUCCESSFUL in 2m 14s</td><td><code>runtime/logs/model-gradle-20261116-141608.log</code></td></tr>
+    <tr><td>DEX 符号实查</td><td class="yes"><code>PersonIdResolver</code> / <code>resolveStableLabels</code> / <code>submitLabels</code> / <code>setFaceLabels</code> / <code>P%03d</code> 均在新包 dex 内</td><td>同上 verify 日志</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">9</span>诚实边界与真机怎么验</h2>
+  <div class="note danger"><strong>必须重新上传安装 APK。</strong>为回应「重新编译过没」的质疑，
+  本轮又做了一次 <code>--rerun-tasks</code> 强制全量重编译（<code>65 / 65 tasks executed</code>），
+  最终交付包为 <strong>116,455,212 B · 2026-11-16 14:14:54</strong>。
+  比上一版 117,605,130 B 小 1,149,918 B，是重新打包的压缩差异；
+  native libs / 两个模型 / <code>kun.jpg</code> / 9 dex / 资源已逐项核对齐全。
+  手机上那份旧包不会自动更新 —— 不重装的话你看到的仍会是 <code>ID n</code>。</div>
+  <ol class="steps">
+    <li>把新的 <code>app-debug.apk</code> 重新传到 Xiaomi 14 Pro 并安装（覆盖安装即可，人物库数据按模型隔离保留）。</li>
+    <li><strong>直接打开你原来那个「人脸跟踪」页</strong>，不用再找新卡片：切到「图像检测」，选一张人脸照片，框上应是 <code>P001</code> / <code>P002</code> 而不是 1/2/3。</li>
+    <li>切到「视频跟踪」，露出脸拿到 <code>P001</code>；<strong>完全离开画面</strong>几秒再回来，应仍是 <code>P001</code>，不会变成 ID 2。</li>
+    <li>去「人脸管理」应能看到该记录显示为 <code>P001</code>，搜索框输入 <code>P001</code> 能搜到。</li>
+  </ol>
+  <h3>还没收口的边界</h3>
+  <ul>
+    <li><span class="pill warn">阈值</span> <code>T_match=0.48</code> / <code>T_new=0.36</code> 仍是 B0 占位值，两个真人样本未采集；B0 的 <code>doNotUseForThreshold</code> 警告依然成立。</li>
+    <li><span class="pill warn">灰色区</span> <code>FaceRepository.open()</code> 把 FeatureHub 搜索阈值设为 SDK 推荐值，低分候选被提前过滤，生产线实际只有「高分命中 / 无候选」两种状态。</li>
+    <li><span class="pill warn">视频页</span> 稳定标签<strong>没有设备端直接断言</strong>：它依赖 CameraX 实时帧与 GL overlay，无法在 instrumented test 里直接实例化。其决策内核由 15 项 JVM 单测 + B3 三项设备端重入测试覆盖，recognition Session 分支由 <code>SESSION_SWITCH</code> 类比验证，但真机视频效果仍需你实机确认。</li>
+    <li><span class="pill warn">样本</span> 仍只有一张 <code>kun.jpg</code>；异人分数分布、多人同框、帧率、最终准确率都未测。</li>
+  </ul>
+  <div class="note info">下一步优先级：① 重装 APK 做上面的 A/B/C 重入验证；
+  ② 两个真人各 3~5 张跑 <code>runtime/calibrate_threshold.py</code> 拿到真实
+  <code>T_match</code> / <code>T_new</code>；③ 若要灰色区生效，让 FeatureHub 搜索阈值可配置。</div>
+  <h3>产物清单</h3>
+  <table>
+    <tr><th>文件</th><th>内容</th></tr>
+    <tr><td><code>app-debug.apk</code></td><td>本轮新包，需重新上传安装</td></tr>
+    <tr><td><code>Unified-StableId-Report.html</code></td><td>本报告，可单独打开 / 传手机</td></tr>
+    <tr><td><code>androidTest/.../UnifiedStableIdTest.java</code></td><td>4 项设备端用例</td></tr>
+    <tr><td><code>runtime/logs/unified-apk-verify.txt</code></td><td>APK 静态 + 字符串实际值 + 签名验证</td></tr>
+    <tr><td><code>runtime/logs/model-logcat-20261115-222838.txt</code></td><td>设备端 logcat 原始证据</td></tr>
+    <tr><td><code>gradle---rerun-tasks-20261116-141428.txt</code></td><td>强制全量重编译日志：65/65 executed</td></tr>
+    <tr><td><code>rebuild-verify-20261116.txt</code></td><td>最终交付包 116,455,212 B 的签名 / 资源 / ABI / DEX 符号验证</td></tr>
+    <tr><td><code>model-gradle-20261116-141608.log</code></td><td>用新包重装后复测 4/4 通过</td></tr>
+    <tr><td><code>Rebuild-Verify-Report.html</code></td><td>「重新编译过没」的专项证据报告</td></tr>
+    <tr><td><code>InspireFace-LocalRun/LocalRun-Plan.md</code> / <code>Research-PersonGallery-Matching.md</code></td><td>执行记录与调研附录 E</td></tr>
+  </table>
+</section>
+
+<div class="foot">RealCue · 统一长期人物编号 · 2026-11-16 · 全部证据落盘于 D 盘项目目录</div>
+</div>
+</body>
+</html>

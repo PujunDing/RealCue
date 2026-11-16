@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>人物库 ID 与匹配准确性 · 实测报告</title>
+<style>
+  :root{
+    --ink:#2C2C2A; --muted:#5F5E5A; --hint:#888780;
+    --line:#D3D1C7; --surface:#F1EFE8; --blue:#185FA5; --blue-l:#E6F1FB;
+    --red:#A32D2D; --red-l:#FCEBEB; --green:#0F6E56; --green-l:#E1F5EE;
+    --amber:#854F0B; --amber-l:#FAEEDA;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    font-size:14px;line-height:1.7;-webkit-text-size-adjust:100%}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 64px}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  h2{font-size:17px;font-weight:600;margin:36px 0 12px;padding-bottom:8px;
+    border-bottom:1px solid var(--line)}
+  h3{font-size:14px;font-weight:600;margin:20px 0 8px}
+  p{margin:8px 0}
+  .sub{color:var(--muted);font-size:13px;margin:0}
+  .lead{background:var(--blue-l);border-left:3px solid var(--blue);
+    padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0}
+  .lead strong{color:var(--blue)}
+  .qa{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
+  .qa .q{font-weight:600;margin:0 0 6px}
+  .qa .a{margin:0;color:var(--ink)}
+  .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;
+    background:var(--green-l);color:var(--green);margin-right:6px}
+  .tag.warn{background:var(--amber-l);color:var(--amber)}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:10px;margin:18px 0}
+  .metric{background:var(--surface);border-radius:8px;padding:14px 16px}
+  .metric .k{font-size:12px;color:var(--muted);margin:0}
+  .metric .v{font-size:24px;font-weight:600;margin:2px 0 0;line-height:1.2}
+  .metric .n{font-size:12px;color:var(--hint);margin:2px 0 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{font-weight:600;color:var(--muted);background:var(--surface)}
+  td.num{font-variant-numeric:tabular-nums;font-family:ui-monospace,Consolas,monospace}
+  .ok{color:var(--green)}
+  .chartbox{border:1px solid var(--line);border-radius:10px;padding:16px;margin:16px 0}
+  .chartbox svg{display:block;width:100%;height:auto}
+  .caption{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .box{border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .box.good{background:var(--green-l);border-color:#9FE1CB}
+  .box.bad{background:var(--amber-l);border-color:#FAC775}
+  .box h3{margin-top:0}
+  ul{margin:8px 0;padding-left:20px}
+  li{margin:5px 0}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:12px;
+    background:var(--surface);padding:1px 5px;border-radius:4px}
+  .path{word-break:break-all;font-size:12px;color:var(--muted)}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--hint)}
+  @media(max-width:620px){.two{grid-template-columns:1fr}.wrap{padding:20px 14px 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>人物库 ID 与匹配准确性 · 实测报告</h1>
+<p class="sub">RealCue · InspireFace 1.2.4.post1 · Pikachu · 2026-11-15 ·
+设备 RealCue_API35 (Android 15 / API 35 / x86_64)</p>
+
+<div class="lead">
+<strong>一句话结论：</strong>当前 APK 就能看到人物库分配的 ID（在 Face management /
+Face recognition / Face 1:1 页面），但实时画框上的数字是短时 <code>track_id</code>，
+不是库 ID。实测同一个人 7 种画面变体 <strong>7/7 全部命中同一个库 ID 1001</strong>，
+最低相似度 0.9680，而官方阈值只有 0.48 —— 模型层「离场再回来沿用旧号」是稳的。
+<strong>但「准」还不能打包票</strong>：异人（不同人）分数分布在本机完全没测，
+必须真机两个真人标定。
+</div>
+
+<h2>1. 你的两个问题，直接回答</h2>
+
+<div class="qa">
+<p class="q">Q1：能不能看到人物库给他分的是什么 ID？</p>
+<p class="a"><span class="tag">能，不用改代码</span>
+去 <strong>Face management</strong>（列表里每条显示 <code>ID · n</code>）或
+<strong>Face recognition</strong>（命中显示 <code>ID · n · cosine confidence … · threshold …</code>，
+未命中也显示分数与阈值）就能看到。前提：库里得先有这个人 —— 官方 Demo 是
+<strong>手动录入</strong>的，不会自动建档。
+<span class="tag warn">看不到</span> Face Tracking 页框上的 <code>1 / 2</code> 是
+<code>track_id</code>，只在当前摄像头会话内稳定，离场必然变号，这正是你遇到的现象。</p>
+</div>
+
+<div class="qa">
+<p class="q">Q2：我希望这个比较准，现在准吗？</p>
+<p class="a"><span class="tag">模型层：稳</span><span class="tag warn">整体：还差一半证据</span>
+同人变体零漏匹配、分数高度集中（极差仅 0.032）、纯黑图不误建档 —— 说明
+<strong>不是模型认不出人</strong>。但本机只有 <code>kun.jpg</code> 一张人脸，
+<strong>异人分数分布完全空白</strong>；阈值 0.48 对这批变换偏宽松，
+「把陌生人误认成已知人」的风险未知。所以不能说「已经准」，
+只能说「沿用旧号这件事稳，剩下的不准来自应用层决策和未标定的异人阈值」。</p>
+</div>
+
+<h2>2. 关键数字</h2>
+<div class="metrics">
+  <div class="metric"><p class="k">官方推荐余弦阈值</p><p class="v">0.48</p><p class="n">GetRecommendedCosineThreshold()</p></div>
+  <div class="metric"><p class="k">特征维度</p><p class="v">512</p><p class="n">GetFeatureLength()</p></div>
+  <div class="metric"><p class="k">同人变体命中率</p><p class="v">7 / 7</p><p class="n">全部命中 ID 1001</p></div>
+  <div class="metric"><p class="k">最低相似度</p><p class="v">0.9680</p><p class="n">水平镜像（最差情况）</p></div>
+  <div class="metric"><p class="k">最低分对阈值的余量</p><p class="v">+0.4880</p><p class="n">约为阈值的 2 倍</p></div>
+</div>
+
+<h2>3. 分数分布 vs 阈值</h2>
+<div class="chartbox">
+<svg viewBox="0 0 680 320" width="100%" role="img" aria-label="同人变体余弦相似度与阈值 0.48 的对比条形图">
+  <title>同人变体相似度与官方阈值对比</title>
+  <desc>七个同人画面变体的余弦相似度介于 0.9680 到 1.0000 之间，全部远高于 0.48 的推荐阈值，且全部命中同一个人物库 ID 1001。</desc>
+  <text x="8" y="18" font-size="12" fill="#5F5E5A" font-family="system-ui,sans-serif">余弦相似度（越高越像）</text>
+  <text x="379" y="18" font-size="12" fill="#A32D2D" font-family="system-ui,sans-serif">官方阈值 0.48</text>
+  <line x1="126" y1="30" x2="126" y2="268" stroke="#D3D1C7" stroke-width="1"/>
+  <line x1="383" y1="30" x2="383" y2="268" stroke="#D3D1C7" stroke-width="1"/>
+  <line x1="640" y1="30" x2="640" y2="268" stroke="#D3D1C7" stroke-width="1"/>
+  <line x1="373" y1="30" x2="373" y2="268" stroke="#A32D2D" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="126" y="284" font-size="12" fill="#888780" text-anchor="middle" font-family="system-ui,sans-serif">0.0</text>
+  <text x="383" y="284" font-size="12" fill="#888780" text-anchor="middle" font-family="system-ui,sans-serif">0.5</text>
+  <text x="640" y="284" font-size="12" fill="#888780" text-anchor="middle" font-family="system-ui,sans-serif">1.0</text>
+
+  <text x="118" y="54" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">原图</text>
+  <rect x="126" y="41" width="514" height="18" rx="3" fill="#185FA5"/>
+  <text x="632" y="54" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">1.0000</text>
+
+  <text x="118" y="86" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">JPEG q=60</text>
+  <rect x="126" y="73" width="506" height="18" rx="3" fill="#185FA5"/>
+  <text x="624" y="86" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">0.9845</text>
+
+  <text x="118" y="118" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">亮度 +40</text>
+  <rect x="126" y="105" width="506" height="18" rx="3" fill="#185FA5"/>
+  <text x="624" y="118" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">0.9839</text>
+
+  <text x="118" y="150" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">亮度 −40</text>
+  <rect x="126" y="137" width="500" height="18" rx="3" fill="#185FA5"/>
+  <text x="618" y="150" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">0.9732</text>
+
+  <text x="118" y="182" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">缩放 0.75</text>
+  <rect x="126" y="169" width="512" height="18" rx="3" fill="#185FA5"/>
+  <text x="630" y="182" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">0.9952</text>
+
+  <text x="118" y="214" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">旋转 4°</text>
+  <rect x="126" y="201" width="511" height="18" rx="3" fill="#185FA5"/>
+  <text x="629" y="214" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">0.9937</text>
+
+  <text x="118" y="246" font-size="12" fill="#2C2C2A" text-anchor="end" font-family="system-ui,sans-serif">水平镜像</text>
+  <rect x="126" y="233" width="498" height="18" rx="3" fill="#185FA5"/>
+  <text x="616" y="246" font-size="12" fill="#ffffff" text-anchor="end" font-family="ui-monospace,monospace">0.9680</text>
+
+  <text x="8" y="306" font-size="12" fill="#5F5E5A" font-family="system-ui,sans-serif">最低分 0.9680（水平镜像）仍高出阈值 0.4880；纯黑图返回 NO_FACE，未建档。</text>
+</svg>
+<p class="caption">所有条形都远远越过红色虚线（阈值 0.48）。<code>FaceComparison</code> 与
+FeatureHub 检索的 confidence 逐行完全相等，说明阈值可以在两条路径间搬用。</p>
+</div>
+
+<table>
+<thead><tr><th>画面条件</th><th>与底图相似度</th><th>FeatureHub confidence</th><th>命中 ID</th><th>≥ 0.48</th><th>沿用同一 ID</th></tr></thead>
+<tbody>
+<tr><td>原图 base</td><td class="num">1.0000</td><td class="num">1.0000</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>JPEG q=60 往返</td><td class="num">0.9845</td><td class="num">0.9845</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>亮度 +40</td><td class="num">0.9839</td><td class="num">0.9839</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>亮度 −40</td><td class="num">0.9732</td><td class="num">0.9732</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>缩放 0.75</td><td class="num">0.9952</td><td class="num">0.9952</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>旋转 4°</td><td class="num">0.9937</td><td class="num">0.9937</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>水平镜像</td><td class="num">0.9680</td><td class="num">0.9680</td><td class="num">1001</td><td class="ok">是</td><td class="ok">是</td></tr>
+<tr><td>纯黑图（对照）</td><td>—</td><td>—</td><td>—</td><td>—</td><td>NO_FACE，未建档</td></tr>
+</tbody>
+</table>
+
+<h2>4. 这些数字能说明什么、不能说明什么</h2>
+<div class="two">
+<div class="box good">
+<h3>能说明</h3>
+<ul>
+<li>同一个人不会因为压缩、明暗、尺度、小角度旋转、镜像就被认成别人。</li>
+<li>只要库里有这个人，重新提特征查库就能拿回同一个 ID；配合已有的持久化测试，<strong>「离场再回来变号」不是模型认不出人</strong>。</li>
+<li>纯黑/无人脸帧不会凭空造特征、不会误建档，自动建档有安全底线。</li>
+</ul>
+</div>
+<div class="box bad">
+<h3>不能说明</h3>
+<ul>
+<li>这些是<strong>同一张静态图做数字变换</strong>，不是真机摄像头跨帧、跨姿态、跨表情、跨距离的真实变化。</li>
+<li><strong>异人分数分布完全没测</strong> —— 本机只有一张脸，造不出第二个真人。真正决定「准不准」的是「同人最低分」与「异人最高分」的间隔，现在只有上界、没有下界。</li>
+<li>阈值 0.48 对这批数据<strong>过于宽松</strong>：同人几乎不会漏，但陌生人分数落在 0.48~0.9 会怎样<strong>未知</strong>。风险是「误认成已知人」，不是「认不出熟人」。</li>
+</ul>
+</div>
+</div>
+
+<h2>5. 当前 APK 里，库 ID 到底在哪能看到</h2>
+<table>
+<thead><tr><th>位置</th><th>显示内容</th><th>前提</th></tr></thead>
+<tbody>
+<tr><td>首页 → Face management</td><td>每条 <code>ID · n</code> + 名字</td><td>已手动录入记录</td></tr>
+<tr><td>Face recognition 命中</td><td><code>ID · n · cosine confidence 0.xxx · threshold 0.480</code></td><td>库非空且检索命中</td></tr>
+<tr><td>Face recognition 未命中</td><td><code>cosine confidence 0.xxx · threshold 0.480</code></td><td>库非空</td></tr>
+<tr><td>Face 1:1 比对</td><td>cosine 分数 + 推荐阈值</td><td>两侧各选一张脸</td></tr>
+</tbody>
+</table>
+<p><strong>第三行是排障关键</strong>：未命中时也会显示实际分数和阈值。分数只比阈值低一点 →
+阈值偏严或录入样本不够代表；差很多 → 角度、光照、遮挡或录入质量问题。
+你现在就能在手机上用这个页面量一下自己的重入分数。</p>
+<p>想让库 ID <strong>自动出现在实时画框上</strong>（而不是 track_id），需要阶段 B 改造 +
+重新构建 APK + 重新传到手机。<strong>现在手机上的 APK 是旧版，改源码不会自动生效。</strong></p>
+
+<h2>6. 还差什么（按优先级）</h2>
+<table>
+<thead><tr><th>#</th><th>事项</th><th>为什么必须做</th><th>在哪做</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>B0 异人阈值标定</strong>：采集 A / B 两个真人各多段视频帧，统计同人最低分与异人最高分，定 <code>T_match</code> / <code>T_new</code></td><td>这是「准」唯一还缺的实验数据，本机测不出来</td><td>真机 + 设备端测试</td></tr>
+<tr><td>2</td><td>把标签从 <code>track_id</code> 换成 <code>person_id</code>（<code>P%03d</code>）</td><td>直接解决你看到的「离场变号」</td><td>FaceTrackingAnalyzer / PersonIdResolver</td></tr>
+<tr><td>3</td><td>多脸 Session（<code>maxFaces &gt; 1</code>）+ 逐脸提特征 + 自动建档</td><td>当前视频识别只处理 face 0，且库只能手动录入</td><td>FaceEngine / RecognitionFaceAnalyzer / FaceRepository</td></tr>
+<tr><td>4</td><td>三区阈值 + 稳定门控 + 同帧互斥防串号</td><td>避免糊脸入库、重复建号、两人共用同一编号</td><td>PersonIdResolver（新类）</td></tr>
+<tr><td>5</td><td>真机 A/B/C 重入验收</td><td>验证 P001 离场回来仍是 P001、重启应用仍沿用</td><td>真机脚本</td></tr>
+</tbody>
+</table>
+<p>阶段 B 业务代码（<code>app/src/main/</code>）<strong>目前一行未改</strong>；本次只新增了
+设备端测试与文档，手机上跑的仍是原来那个 APK。</p>
+
+<h2>7. 证据文件</h2>
+<table>
+<thead><tr><th>文件</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td class="path">runtime/logs/model-gradle-20261115-201325.log</td><td>BUILD SUCCESSFUL in 53s，tests=1 failures=0</td></tr>
+<tr><td class="path">runtime/logs/model-logcat-20261115-201325.txt</td><td>RealCueGallery 全部数值行（阈值、逐变体分数、命中 ID）</td></tr>
+<tr><td class="path">app/src/androidTest/.../view/GalleryAccuracyProbeTest.java</td><td>测试用例本体</td></tr>
+<tr><td class="path">runtime/logs/model-gradle-20261115-195927.log</td><td>FaceRepositorySdkTest：入库→检索→持久化沿用同一 ID→删除，Pikachu/Megatron 各一遍</td></tr>
+<tr><td class="path">Research-PersonGallery-Matching.md</td><td>阶段 B 完整调研（附录 A 库 ID 可见性 / 附录 B 本次准确性实测）</td></tr>
+</tbody>
+</table>
+<p class="caption">一键复跑：<code>python runtime/verify_model_on_emulator.py
+com.example.inspireface_example.view.GalleryAccuracyProbeTest</code></p>
+
+<footer>
+RealCue / InspireFace-LocalRun · 本报告为设备端实测结果整理，非真机摄像头实时帧验证。
+官方模型包限学术用途，商用需另行核实许可。
+</footer>
+
+</div>
+</body>
+</html>

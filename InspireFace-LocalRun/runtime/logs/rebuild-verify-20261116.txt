@@ -1,0 +1,82 @@
+=== 强制全量重编译（2026-11-16 14:14）===
+CMD: "D:\paper\RealCue\InspireFace-LocalRun\runtime\gradle\gradle-8.7\bin\gradle.bat" --no-daemon --offline -p "D:\paper\RealCue\InspireFace-LocalRun\android-demo" -PinspirefaceSdkSource=local --rerun-tasks :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest
+> Task :app:compileDebugJavaWithJavac
+> Task :app:testDebugUnitTest
+> Task :app:packageDebug
+> Task :app:assembleDebug
+BUILD SUCCESSFUL in 29s
+65 actionable tasks: 65 executed
+
+=== 重新生成的 APK ===
+-rw-r--r-- 1 pjd02 197609 116455212 2026-11-16 14:14:54.459532300 +0800 D:/paper/RealCue/InspireFace-LocalRun/android-demo/app/build/outputs/apk/debug/app-debug.apk
+
+=== aapt2 dump badging ===
+package: name='com.example.inspireface_example' versionCode='2' versionName='1.0.1' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+targetSdkVersion:'35'
+uses-permission: name='android.permission.CAMERA'
+launchable-activity: name='com.example.inspireface_example.HomeActivity'  label='' icon=''
+
+=== 新字符串在 resources.arsc 里的实际值 ===
+    resource 0x7f0f009e string/detection_face_selected_stable
+      () "%1$s selected · %2$d face(s) · %3$d landmarks returned"
+      (zh) "已选中 %1$s · 共 %2$d 张人脸 · SDK 返回 %3$d 个关键点"
+--
+    resource 0x7f0f00cc string/face_id_format
+      () "P%1$03d"
+      (zh) "P%1$03d"
+--
+    resource 0x7f0f01dd string/recognition_result_details
+      () "P%1$03d · cosine confidence %2$.3f · threshold %3$.3f"
+      (zh) "P%1$03d · 模型置信度 %2$.3f · 阈值 %3$.3f"
+
+=== apksigner verify ===
+Verifies
+Verified using v2 scheme (APK Signature Scheme v2): true
+Number of signers: 1
+Signer #1 certificate DN: C=US, O=Android, CN=Android Debug
+
+=== dex 里是否真的含有本轮新代码 / ABI / 结构 ===
+size= 116455212
+mtime= 2026-11-16T14:14:54.459532
+entries= 935
+abis= ['arm64-v8a', 'armeabi-v7a', 'x86_64']
+dex= ['classes.dex', 'classes2.dex', 'classes3.dex', 'classes4.dex', 'classes5.dex', 'classes6.dex', 'classes7.dex', 'classes8.dex', 'classes9.dex']
+SYMBOL PersonIdResolver                       classes4.dex,classes6.dex,classes7.dex
+SYMBOL RealCueTracking                        classes7.dex
+SYMBOL RealCueAutoId                          classes7.dex
+SYMBOL formatLabel                            classes4.dex,classes6.dex
+SYMBOL resolveStableLabels                    classes4.dex
+SYMBOL detectWithLandmarksAndFeatures         classes4.dex,classes6.dex
+SYMBOL submitLabels                           classes7.dex
+SYMBOL setFaceLabels                          classes4.dex,classes8.dex
+SYMBOL createFaceTrackingSession              classes7.dex
+SYMBOL P%03d                                  classes6.dex
+has_resources_arsc= True
+has_kun_jpg= True
+
+=== 新 APK 关键内容明细（确认没有少东西）===
+-- native libs --
+  lib/arm64-v8a/libInspireFace.so                        13718104
+  lib/arm64-v8a/libimage_processing_util_jni.so             32544
+  lib/arm64-v8a/libsurface_util_jni.so                       4896
+  lib/armeabi-v7a/libInspireFace.so                       9937576
+  lib/armeabi-v7a/libimage_processing_util_jni.so           24448
+  lib/armeabi-v7a/libsurface_util_jni.so                     3460
+  lib/x86_64/libInspireFace.so                           13465288
+  lib/x86_64/libimage_processing_util_jni.so                49496
+  lib/x86_64/libsurface_util_jni.so                          4912
+-- model / sample assets --
+  assets/inspireface/Megatron                            61644800
+  assets/inspireface/Pikachu                             17203200
+  assets/inspireface/kun.jpg                               217529
+  assets/inspireface/version.txt                              165
+-- dex sizes --
+  classes.dex                                            10562192
+  classes2.dex                                             541312
+  classes3.dex                                              35520
+  classes4.dex                                             162268
+  classes5.dex                                              13544
+  classes6.dex                                              35248
+  classes7.dex                                             182332
+  classes8.dex                                              13872
+  classes9.dex                                            2831996

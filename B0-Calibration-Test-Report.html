@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RealCue · B0 阈值标定测试开发报告</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1f2329; --muted:#5c6570;
+    --line:#e3e6eb; --blue:#2563eb; --blue-bg:#eff5ff;
+    --amber:#b45309; --amber-bg:#fffbeb; --amber-line:#fcd34d;
+    --green:#15803d; --green-bg:#f0fdf4;
+    --purple:#7c3aed; --purple-bg:#f5f0ff;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:32px 20px 64px}
+  header{padding:28px 30px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;box-shadow:0 1px 3px rgba(20,30,50,.05);margin-bottom:18px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--blue);font-weight:700;margin-bottom:8px}
+  h1{margin:0 0 8px;font-size:27px;line-height:1.3}
+  .sub{margin:0;color:var(--muted);font-size:13.5px}
+  .callout{padding:16px 20px;border-radius:12px;margin-bottom:22px;font-size:14.5px}
+  .warn{background:var(--amber-bg);border:1px solid var(--amber-line);color:#78350f}
+  .info{background:var(--blue-bg);border:1px solid #c7dbff;color:#1e3a8a}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px 26px;margin-bottom:16px;box-shadow:0 1px 3px rgba(20,30,50,.04)}
+  h2{font-size:17px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:14.5px;margin:18px 0 8px}
+  p{margin:8px 0;font-size:14px}
+  ul{margin:8px 0;padding-left:20px;font-size:14px}
+  li{margin:5px 0}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .card{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .card .n{font-size:23px;font-weight:700;line-height:1.2;font-family:var(--mono)}
+  .card .l{font-size:12px;color:var(--muted);margin-top:5px}
+  .n.blue{color:var(--blue)} .n.green{color:var(--green)}
+  .n.amber{color:var(--amber)} .n.purple{color:var(--purple)}
+  table{width:100%;border-collapse:collapse;font-size:13.3px;margin:10px 0}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f8f9fb;font-weight:650;color:#353c46}
+  td code,th code,p code,li code{font-family:var(--mono);font-size:12.3px;
+    background:#f2f4f7;padding:1px 5px;border-radius:4px}
+  pre{background:#f7f8fa;border:1px solid var(--line);border-radius:9px;
+    padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.4px;
+    line-height:1.65;color:#2b313b;margin:10px 0}
+  .tag{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 9px;
+    border-radius:20px;white-space:nowrap}
+  .t-ok{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
+  .t-no{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
+  .t-blue{background:var(--blue-bg);color:var(--blue);border:1px solid #c7dbff}
+  .chart{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;
+    vertical-align:-1px;margin-right:5px}
+  footer{color:var(--muted);font-size:12.5px;text-align:center;padding:10px 0 0}
+  @media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RealCue · Stage B / B0</div>
+  <h1>阈值标定测试开发报告</h1>
+  <p class="sub">2026-11-15 · InspireFace 1.2.4.post1 · Pikachu / 512 维 · RealCue_API35（Android 15 / API 35 / x86_64）</p>
+</header>
+
+<div class="callout warn">
+  <strong>一句话结论：</strong>B0 的测试开发已实现并在模拟器上实跑通过（3 项设备端用例、0 失败），
+  JSON / CSV 产物可解析回收、防误用保护生效；但<strong>目前仍没有可用的
+  <code>T_match</code> / <code>T_new</code></strong> —— 最终一轮只是链路验证，A/ 与 B/
+  误放了同一个人，结果已被正确标记为不可用于阈值。需要两个真人样本才能收口。
+</div>
+
+<section>
+  <h2>1. 关键数字</h2>
+  <div class="cards">
+    <div class="card"><div class="n green">3 / 0</div><div class="l">设备端用例数 / 失败数<br>XML tests=3 failures=0</div></div>
+    <div class="card"><div class="n blue">0.4800</div><div class="l">官方推荐余弦阈值<br>GetRecommendedCosineThreshold()</div></div>
+    <div class="card"><div class="n purple">512</div><div class="l">特征维度<br>featureLength</div></div>
+    <div class="card"><div class="n amber">true</div><div class="l">doNotUseForThreshold<br>同人误放被拦下</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>2. 三层测试设计</h2>
+  <p>用户要求「做好测试开发」，所以不是只写方案：把 B0 拆成三层，每层都有独立断言，
+  并且三层都在 <code>RealCue_API35</code> 上真实跑过。<code>main/</code> 源码一行未改。</p>
+  <table>
+    <tr><th>层</th><th>用例</th><th>验证什么</th><th>为什么不省</th></tr>
+    <tr>
+      <td>① 纯数学</td>
+      <td><code>statisticsLogicIsCorrect</code></td>
+      <td><code>CalibrationMath</code> 的百分位、可分 / 重叠 / 缺异人样本三种分支、
+          <code>T_match</code> / <code>T_new</code>、召回与误接受率</td>
+      <td>统计逻辑不依赖 Android / native，可被穷尽覆盖；错一位小数会直接把阈值带偏</td>
+    </tr>
+    <tr>
+      <td>② 真实特征链路</td>
+      <td><code>builtInSampleProducesValidIntraPersonScores</code></td>
+      <td>内置样本真的能加载 <code>libInspireFace.so</code>、检测出脸、产出 512 维特征，
+          两两比对分数合法；纯黑图返回 <code>NO_FACE</code></td>
+      <td>防止「数学全对但 native 没跑起来」的假通过</td>
+    </tr>
+    <tr>
+      <td>③ 完整 pipeline</td>
+      <td><code>calibrationPipelineWritesResultFile</code></td>
+      <td>读样本 → 提特征 → 同人 / 异人 pair 分数矩阵 → 写 JSON + CSV →
+          回读解析并断言字段一致</td>
+      <td>验证产物真的能用，而不是只在 logcat 里好看</td>
+    </tr>
+  </table>
+  <div class="callout info">
+    <strong>配套文件：</strong><code>CalibrationMath.java</code>（纯统计，<code>analyze()</code>
+    两个重载 + <code>percentile()</code>）、<code>GalleryThresholdCalibrationTest.java</code>
+    （3 项设备端测试）、<code>runtime/calibrate_threshold.py</code>（一键脚本）、
+    <code>runtime/tmp/compile_androidtest.py</code>（编译闸门，启动模拟器前先编译，避免白等）。
+  </div>
+</section>
+
+<section>
+  <h2>3. 实跑证据</h2>
+  <pre>=== installing target + androidTest APK before pushing samples ===
+  BUILD SUCCESSFUL in 25s
+=== pushed A=3 B=2 (failures=0) ===
+  device listing: .../calibration/A: face_00.jpg face_01.jpg face_02.jpg
+                  .../calibration/B: face_00.jpg face_01.jpg
+BUILD SUCCESSFUL in 1m 29s
+Starting 3 tests on RealCue_API35(AVD) - 15
+Finished 3 tests on RealCue_API35(AVD) - 15
+
+&lt;testsuite name="...GalleryThresholdCalibrationTest"
+  tests="3" failures="0" errors="0" skipped="0" time="3.609"&gt;
+  &lt;testcase name="builtInSampleProducesValidIntraPersonScores" /&gt;
+  &lt;testcase name="calibrationPipelineWritesResultFile" /&gt;
+  &lt;testcase name="statisticsLogicIsCorrect" /&gt;
+
+recovered CSV from logcat (11 lines)
+recovered JSON from logcat (16 lines)
+=== CALIBRATION RESULT ===
+  mode=external_samples official=0.4800
+  sameMin=1.0000 diffMax=1.0000 separable=False margin=0.0000
+  T_match=1.0000 T_new=0.8800 recall=1.0000 FAR=1.0000
+  warning: A/ and B/ look like the SAME PERSON ... Thresholds NOT usable.
+=== NOT USABLE FOR THRESHOLD - see warning above ===</pre>
+  <table>
+    <tr><th>证据</th><th>文件 / 位置</th><th>结论</th></tr>
+    <tr><td>设备端测试 XML</td><td><code>app/build/outputs/androidTest-results/connected/debug/TEST-RealCue_API35(AVD) - 15-_app-.xml</code></td><td><span class="tag t-ok">3 项全通过</span></td></tr>
+    <tr><td>预装 APK</td><td><code>runtime/logs/calibration-install-20261115-204457.log</code></td><td><span class="tag t-ok">BUILD SUCCESSFUL in 25s</span></td></tr>
+    <tr><td>测试构建</td><td><code>runtime/logs/calibration-gradle-20261115-204457-run1.log</code></td><td><span class="tag t-ok">BUILD SUCCESSFUL in 1m 29s</span></td></tr>
+    <tr><td>设备端日志</td><td><code>runtime/logs/calibration-logcat-20261115-204457.txt</code></td><td><span class="tag t-blue">GUARD / RESULT_* 镜像齐全</span></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>4. 为什么这一轮结果「不可用于阈值」</h2>
+  <p>链路验证时 A/ 与 B/ 放的是同一张 <code>kun.jpg</code> 的副本，所以同人 pair 与
+  异人 pair 的分数<strong>全部等于 1.0000</strong>，两段分布完全重合 —— 不存在
+  「同人最低分高于异人最高分」的间隔，任何阈值都无法同时做到高召回与零误接受。</p>
+
+  <div class="chart">
+    <svg viewBox="0 0 640 200" width="100%" role="img" aria-label="同人与异人分数分布完全重叠示意图">
+      <text x="14" y="22" font-size="13" fill="#1f2329" font-weight="600">余弦相似度分布（本轮链路验证）</text>
+      <!-- axis -->
+      <line x1="50" y1="128" x2="600" y2="128" stroke="#9aa3af" stroke-width="2"/>
+      <line x1="50" y1="123" x2="50" y2="133" stroke="#9aa3af" stroke-width="2"/>
+      <line x1="600" y1="123" x2="600" y2="133" stroke="#9aa3af" stroke-width="2"/>
+      <text x="44" y="148" font-size="12" fill="#5c6570">0</text>
+      <text x="586" y="148" font-size="12" fill="#5c6570">1.0</text>
+      <!-- official threshold -->
+      <line x1="314" y1="52" x2="314" y2="134" stroke="#2563eb" stroke-width="2" stroke-dasharray="5 4"/>
+      <rect x="238" y="34" width="152" height="20" rx="5" fill="#eff5ff" stroke="#c7dbff"/>
+      <text x="246" y="48" font-size="11.5" fill="#1e40af">官方阈值 0.48</text>
+      <!-- same band -->
+      <rect x="548" y="72" width="52" height="20" rx="4" fill="#fde68a" stroke="#d97706"/>
+      <text x="376" y="86" font-size="11.5" fill="#92400e">same  [1.0000, 1.0000]</text>
+      <line x1="530" y1="82" x2="546" y2="82" stroke="#d97706" stroke-width="1.5"/>
+      <!-- diff band -->
+      <rect x="548" y="98" width="52" height="20" rx="4" fill="#bfdbfe" stroke="#2563eb"/>
+      <text x="384" y="112" font-size="11.5" fill="#1e40af">diff   [1.0000, 1.0000]</text>
+      <line x1="532" y1="108" x2="546" y2="108" stroke="#2563eb" stroke-width="1.5"/>
+      <!-- overlap marker -->
+      <rect x="540" y="64" width="68" height="62" rx="8" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="330" y="166" font-size="12.5" fill="#6d28d9" font-weight="600">两区间完全重叠 → separable = false，margin = 0</text>
+      <text x="330" y="186" font-size="12" fill="#5c6570">期望形态：same 整体在右、diff 整体在左，中间留出间隔才能定 T_match / T_new</text>
+    </svg>
+    <div class="legend">
+      <span><i style="background:#fde68a"></i>同人 pair 分数区间</span>
+      <span><i style="background:#bfdbfe"></i>异人 pair 分数区间</span>
+      <span><i style="background:#2563eb"></i>官方推荐阈值 0.48</span>
+    </div>
+  </div>
+
+  <pre>{
+  "mode": "external_samples",
+  "model": "Pikachu",
+  "officialThreshold": 0.4800,
+  "doNotUseForThreshold": true,
+  "falseAcceptAtOfficial": true,
+  "warning": "A/ and B/ look like the SAME PERSON ... Thresholds NOT usable.",
+  "stats": {"sameCount":4,"diffCount":6,"sameMin":1.0000,"diffMax":1.0000,
+            "separable":false,"margin":0.0000,"matchThreshold":1.0000,
+            "newThreshold":0.8800,"recallAtMatch":1.0000,
+            "falseAcceptAtMatch":1.0000}
+}</pre>
+  <p><span class="tag t-no">这是设计中的正确行为</span>
+  脚本打印的 <code>T_match=1.0000</code> / <code>T_new=0.8800</code> 是数学输出，
+  但被 <code>doNotUseForThreshold=true</code> 明确否决，并以
+  <code>NOT USABLE FOR THRESHOLD</code> 收尾。<strong>不会有人拿它去填阶段 B 的三区阈值。</strong></p>
+</section>
+
+<section>
+  <h2>5. 实跑中修掉的坑（都已落地，不是 TODO）</h2>
+  <table>
+    <tr><th>#</th><th>问题</th><th>修法</th></tr>
+    <tr><td>1</td><td><code>/sdcard/Android/data/...</code> 在 Scoped Storage / FUSE 下 adb 不可见，<code>adb pull</code> 报 No such file</td><td>改用 <code>/storage/emulated/0/Android/data/&lt;pkg&gt;/files/calibration</code></td></tr>
+    <tr><td>2</td><td><code>mkdir /storage/emulated/0/Android</code> Permission denied，<code>Android/data</code> 父目录不存在</td><td>新增 <code>install_apks()</code>，push <strong>之前</strong>先装 <code>installDebug</code> + <code>installDebugAndroidTest</code></td></tr>
+    <tr><td>3</td><td><code>connectedDebugAndroidTest</code> 收尾时 App 外部私有目录被清理，pull / exec-out cat 都拿不到结果</td><td>设备端把完整 JSON / CSV 以 <code>RESULT_*_BEGIN</code>、<code>JSON|</code>、<code>CSV|</code>、<code>RESULT_*_END</code> 镜像进 logcat，主机侧 <code>recover_from_logcat()</code> 重建</td></tr>
+    <tr><td>4</td><td>第二轮实跑复用了第一轮旧 <code>threshold-result.json</code>，结论错乱</td><td>每次回收前强制删除旧 JSON / CSV；采集说明改用 <code>DEFAULT_SAMPLES</code></td></tr>
+    <tr><td>5</td><td>无结果时 <code>write_summary()</code> 对 <code>None</code> 取 <code>.get()</code> 崩溃</td><td>None-safe 摘要；<code>ok</code> 判定要求 <code>result is not None</code></td></tr>
+    <tr><td>6</td><td>合成演练 / A、B 误放同一个人会产出危险的「完美」阈值</td><td>设备端 <code>looksLikeSamePerson</code> + <code>unusable</code>，输出 <code>doNotUseForThreshold</code> 与 warning</td></tr>
+    <tr><td>7</td><td>初稿手算断言写错：中位数 0.42→实际 0.38、recall 0.25→实际 0.5、写死 15 pairs、<code>noFace==0</code> 语义误用</td><td>全部改为按实际分布计算，blank 单独断言 <code>extract(...) == null</code></td></tr>
+    <tr><td>8</td><td>Java 里误写 Python <code>"..%02d" % i</code>；Bitmap 过早 <code>recycle()</code>；patch 脚本漏 <code>import os</code></td><td>改 <code>String.format(Locale.ROOT, ...)</code>；用 <code>loadedBitmaps</code> 保活到 finally 统一回收；补齐 import</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>6. 防误用保护（核心代码）</h2>
+  <pre>boolean external = filesA.size() &gt;= MIN_FEATURES_PER_PERSON
+        &amp;&amp; filesB.size() &gt;= MIN_FEATURES_PER_PERSON;
+
+boolean looksLikeSamePerson = external &amp;&amp; !r.separable
+        &amp;&amp; r.diffMax &gt;= (r.sameMin - 0.02f);
+boolean unusable = !external || looksLikeSamePerson;
+
+// JSON: "doNotUseForThreshold": unusable
+// logcat: GUARD looksLikeSamePerson=true unusable=true</pre>
+  <p>没有外部真人样本（纯自检 / 合成演练），或两段分布看起来像同一个人时，
+  一律不可用于阈值。这是「把测试做扎实」里最要紧的一条：宁可明确说「还没测出来」，
+  也不给出一个看起来漂亮但会误认人的数字。</p>
+</section>
+
+<section>
+  <h2>7. 产物清单</h2>
+  <table>
+    <tr><th>文件</th><th>大小 / 内容</th><th>状态</th></tr>
+    <tr><td><code>runtime/logs/calibration-20261115-204457/threshold-result.json</code></td><td>905 B，完整统计，可 <code>json.load()</code></td><td><span class="tag t-ok">已落盘</span></td></tr>
+    <tr><td><code>runtime/logs/calibration-20261115-204457/threshold-pairs.csv</code></td><td>217 B，header + 4 same + 6 diff 逐对分数</td><td><span class="tag t-ok">已落盘</span></td></tr>
+    <tr><td><code>runtime/logs/calibration-20261115-204457/calibration-summary.md</code></td><td>1671 B，人类可读摘要（含警告与采集说明）</td><td><span class="tag t-ok">已落盘</span></td></tr>
+    <tr><td><code>runtime/calibrate_threshold.py</code></td><td>一键标定脚本，采集目录已指向默认 <code>runtime/calibration</code></td><td><span class="tag t-ok">可用</span></td></tr>
+    <tr><td><code>runtime/calibration/A/</code>、<code>B/</code> + README</td><td>真人样本采集模板</td><td><span class="tag t-blue">待放照片</span></td></tr>
+  </table>
+  <p>历史摘要文件里的采集目录仍写着临时 <code>chain_samples</code>（该目录已删除），
+  那是当时脚本尚未修正时生成的<strong>历史产物</strong>；当前脚本已改为默认
+  <code>runtime/calibration</code>，请以本报告与目录内 README 为准。</p>
+</section>
+
+<section>
+  <h2>8. 下一步：采集两个真人样本</h2>
+  <pre>D:\paper\RealCue\InspireFace-LocalRun\runtime\calibration\
+├── A\   ← 同一个人（甲），至少 2 张，建议 3~5 张
+└── B\   ← 另一个人（乙），至少 2 张，建议 3~5 张
+
+cd /d D:\paper\RealCue\InspireFace-LocalRun
+C:/Users/pjd02/.workbuddy/binaries/python/versions/3.13.12/python.exe runtime/calibrate_threshold.py</pre>
+  <ul>
+    <li>用最终部署的 <strong>Xiaomi 14 Pro</strong> 拍，不用模拟器、不用网图、不复制同一张图充数。</li>
+    <li>覆盖不同角度（正脸 / 微侧）、距离、光照、表情；每张只含一张清晰正脸。</li>
+    <li>A/ 与 B/ 必须是<strong>不同的人</strong>，否则会被第 6 节的防护拦下。</li>
+  </ul>
+  <p><strong>判定标准：</strong>摘要里没有「此结果不可用于设定阈值」的警告，且
+  <code>separable=true</code> / <code>margin&gt;0</code> /
+  <code>doNotUseForThreshold=false</code> 时，<code>T_match</code> / <code>T_new</code>
+  才能填入阶段 B 第 5.4 节的三区阈值决策，然后进入 B1。</p>
+</section>
+
+<section>
+  <h2>9. 仍未收口的边界</h2>
+  <ul>
+    <li><span class="tag t-no">未测</span> 真实异人分数分布，因此没有可用的 <code>T_match</code> / <code>T_new</code>。</li>
+    <li><span class="tag t-no">未做</span> B1 <code>PersonIdResolver</code> 纯逻辑与 JVM 单测；B2 多脸 Session + 逐脸提特征 + 自动建档；B3 真机 A/B/C 重入测试。</li>
+    <li><span class="tag t-no">未改</span> <code>app/src/main/</code> 业务源码一行未改，手机上的 APK 仍是旧业务版本；实时框标签仍为 <code>track_id</code>。</li>
+    <li><span class="tag t-no">未验证</span> 真机摄像头实时帧、多人同框、跨帧身份重入、帧率、最终准确率。</li>
+    <li>附录 B 已证明「同人 7 种画面变体 7/7 命中同一库 ID，最低 0.9680」，
+        但那是同一张静态图的数字变换，不能替代真机跨姿态 / 异人实验。</li>
+  </ul>
+</section>
+
+<footer>
+  RealCue · 阶段 B 调研配套报告 · 详细方案见 Research-PersonGallery-Matching.md 附录 C ·
+  执行记录见 InspireFace-LocalRun/LocalRun-Plan.md
+</footer>
+
+</div>
+</body>
+</html>

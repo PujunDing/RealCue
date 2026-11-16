@@ -1,0 +1,16 @@
+{
+  "mode": "synthetic_dry_run",
+  "model": "Pikachu",
+  "officialThreshold": 0.4800,
+  "featureLength": 512,
+  "sampleCountA": 3,
+  "sampleCountB": 3,
+  "noFaceA": 0,
+  "noFaceB": 0,
+  "doNotUseForThreshold": true,
+  "falseAcceptAtOfficial": true,
+  "falseRejectAtOfficial": false,
+  "resultDir": "/storage/emulated/0/Android/data/com.example.inspireface_example/files/calibration",
+  "warning": "SYNTHETIC DRY RUN - both folders contain the SAME bundled face. These numbers only prove the pipeline works. Push two real people into A/ and B/ before using any threshold.",
+  "stats": {"sameCount":6,"diffCount":9,"sameMin":0.9523,"sameMax":0.9924,"sameMean":0.9784,"sameP05":0.9548,"diffMin":0.9610,"diffMax":0.9910,"diffMean":0.9780,"diffP95":0.9900,"hasDiffData":true,"separable":false,"margin":-0.0387,"matchThreshold":0.9924,"newThreshold":0.8724,"recallAtMatch":0.1667,"falseAcceptAtMatch":0.0000}
+}

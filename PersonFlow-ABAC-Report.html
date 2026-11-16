@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RealCue · A→B→A→C 出镜流程验证</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --ink2:#4b5563; --ink3:#6b7280;
+    --line:#e5e9f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669;
+    --warn:#d97706; --danger:#dc2626; --soft:#eef2ff; --soft2:#ecfeff;
+    --oksoft:#ecfdf5; --warnsoft:#fffbeb; --dangersoft:#fef2f2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 20px 72px}
+  header{background:linear-gradient(135deg,#4f46e5 0%,#0ea5e9 100%);
+    color:#fff;border-radius:18px;padding:30px 32px;box-shadow:0 10px 30px rgba(79,70,229,.18)}
+  header .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  header h1{margin:8px 0 6px;font-size:27px;line-height:1.3}
+  header p{margin:0;opacity:.92;font-size:14px}
+  .tagrow{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+    padding:4px 11px;border-radius:999px;font-size:12px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 26px;margin-top:18px;box-shadow:0 2px 8px rgba(16,24,40,.04)}
+  h2{font-size:19px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+    border-radius:8px;background:var(--soft);color:var(--brand);font-size:14px;font-weight:700}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--ink)}
+  p{margin:8px 0}
+  .lead{background:var(--soft);border-left:4px solid var(--brand);border-radius:10px;
+    padding:14px 16px;font-size:15px}
+  .lead strong{color:var(--brand)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fcfdff}
+  .stat .v{font-size:22px;font-weight:750;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--ink3);margin-top:2px}
+  .stat.ok .v{color:var(--ok)} .stat.brand .v{color:var(--brand)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:650;color:var(--ink2)}
+  td code,p code,li code,.mono{font-family:var(--mono);font-size:12.5px;
+    background:#f1f5f9;border-radius:4px;padding:1px 5px}
+  .yes{color:var(--ok);font-weight:650} .no{color:var(--danger);font-weight:650}
+  .note{border-radius:10px;padding:12px 15px;margin-top:12px;font-size:13.5px}
+  .note.warn{background:var(--warnsoft);border:1px solid #fde68a}
+  .note.danger{background:var(--dangersoft);border:1px solid #fecaca}
+  .note.ok{background:var(--oksoft);border:1px solid #a7f3d0}
+  .note.info{background:var(--soft2);border:1px solid #a5f3fc}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:15px 17px;
+    overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.8;margin:12px 0 0}
+  pre .c{color:#94a3b8} pre .g{color:#86efac} pre .y{color:#fcd34d} pre .b{color:#7dd3fc}
+  ul{margin:8px 0;padding-left:22px} li{margin:5px 0}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0 0}
+  .steps li{counter-increment:s;position:relative;padding:10px 14px 10px 46px;
+    border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#fcfdff}
+  .steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:24px;height:24px;
+    border-radius:7px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  .foot{text-align:center;color:var(--ink3);font-size:12px;margin-top:26px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:650}
+  .pill.ok{background:var(--oksoft);color:var(--ok)}
+  .pill.warn{background:var(--warnsoft);color:var(--warn)}
+  svg{display:block;width:100%;height:auto;margin:6px auto 0}
+  @media(max-width:600px){header{padding:22px}section{padding:18px 16px}.wrap{padding:16px 12px 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RealCue · Cast Flow A → B → A → C</div>
+  <h1>能，这个流程已经跑通了</h1>
+  <p>「我出镜 1 号 → 别人 2 号 → 我再出镜还是 1 号 → 新人拿下一个号」，在真实 FeatureHub 上逐步验证通过。</p>
+  <div class="tagrow">
+    <span class="tag">2026-11-16</span>
+    <span class="tag">设备端 2/2 通过</span>
+    <span class="tag">真实 native 特征 + 真实人物库</span>
+    <span class="tag">APK 未变 · 无需重新构建</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">1</span>你说的流程，逐条对照</h2>
+  <div class="lead"><strong>能做。</strong>这不是新写的一套逻辑，而是生产代码里
+  <code>PersonIdResolver</code> + <code>FaceRepository</code>（FeatureHub）本来就在跑的策略；
+  这轮专门写了一个设备端测试把<strong>整条时间序列</strong>真跑了一遍，而不是只测单个环节。</div>
+  <table>
+    <tr><th>你的描述</th><th>实测结果</th><th>状态</th></tr>
+    <tr><td>之前我出镜了，为 1 号</td><td><code>STEP1 A_FIRST -> P001 gallery=1</code></td><td class="yes">✅</td></tr>
+    <tr><td>另一个人出镜为 2 号</td><td><code>STEP2 B_FIRST -> P002 gallery=2</code></td><td class="yes">✅</td></tr>
+    <tr><td>两个人同时在画面里不能串号</td><td><code>STEP3 a=MATCHED(1) b=MATCHED(2) secondA=SKIPPED</code></td><td class="yes">✅</td></tr>
+    <tr><td>我完全离开画面</td><td><code>STEP4 LEAVE_ALL bindings=0 gallery=2</code>（内存绑定清空，库保留）</td><td class="yes">✅</td></tr>
+    <tr><td>我又出镜了，检测到还是我，就还是 1 号</td><td><code>STEP5 A_REENTRY MATCHED(person=1, conf=0.9849746) expected=P001</code></td><td class="yes">✅ 核心</td></tr>
+    <tr><td>2 号回来也还是 2 号</td><td><code>STEP6 B_REENTRY MATCHED(person=2, conf=1.0)</code></td><td class="yes">✅</td></tr>
+    <tr><td>再来个新人 → 拿下一个新号</td><td><code>STEP7 C_FIRST -> P003 gallery=3</code></td><td class="yes">✅</td></tr>
+    <tr><td>全程不能重复建档 / 不能跳号</td><td><code>FINAL cast=A:P001 B:P002 C:P003 enrollCalls=3 RESULT=PASS</code></td><td class="yes">✅</td></tr>
+  </table>
+  <div class="note info">你说「再来个新人 2 号」——这里按<strong>「下一个还没被占用的号」</strong>实现：
+  1、2 已占用时新人拿到 <code>P003</code>，不会复用 2 号、也不会因为 A 重入把号吃掉。
+  另有单独一条用例 <code>reentryDoesNotConsumeANewNumber</code> 验证：A 离场重入之后，
+  第二个人仍然拿 <code>P002</code> 而不是 <code>P003</code>。</div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>流程时序</h2>
+  <svg viewBox="0 0 680 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A B A C 出镜流程时序">
+    <line x1="46" y1="24" x2="46" y2="300" stroke="#cbd5e1" stroke-width="2"/>
+    <g font-size="12" fill="#1f2937">
+      <circle cx="46" cy="46" r="6" fill="#4f46e5"/>
+      <text x="64" y="42" font-weight="650">A 首次出镜</text>
+      <text x="64" y="59" font-size="11" fill="#4f46e5">空库 → 连续 3 次未命中 → 自动建档 P001</text>
+
+      <circle cx="46" cy="88" r="6" fill="#0ea5e9"/>
+      <text x="64" y="84" font-weight="650">B 首次出镜</text>
+      <text x="64" y="101" font-size="11" fill="#0891b2">与 P001 不匹配 → 建档 P002</text>
+
+      <circle cx="46" cy="130" r="6" fill="#4f46e5"/>
+      <text x="64" y="126" font-weight="650">A + B 同框</text>
+      <text x="64" y="143" font-size="11" fill="#4f46e5">同帧互斥：A=P001、B=P002，第三个 A 状脸被 SKIPPED</text>
+
+      <circle cx="46" cy="172" r="6" fill="#94a3b8"/>
+      <text x="64" y="168" font-weight="650">全员离场</text>
+      <text x="64" y="185" font-size="11" fill="#64748b">内存里的 track→编号 绑定清空；人物库仍是 2 条</text>
+
+      <circle cx="46" cy="214" r="6" fill="#059669"/>
+      <text x="64" y="210" font-weight="650" fill="#047857">A 带着全新 trackId 回来</text>
+      <text x="64" y="227" font-size="11" fill="#059669">换画面重新提特征，查库 cosine=0.9849746 → 仍是 P001</text>
+
+      <circle cx="46" cy="256" r="6" fill="#059669"/>
+      <text x="64" y="252" font-weight="650" fill="#047857">B 回来 / 新人 C 出镜</text>
+      <text x="64" y="269" font-size="11" fill="#059669">B 仍 P002；C 与两人都不像 → 下一个空号 P003</text>
+    </g>
+    <rect x="452" y="196" width="216" height="82" rx="12" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="560" y="222" text-anchor="middle" font-size="13" font-weight="700" fill="#047857">最终人物库</text>
+    <text x="560" y="244" text-anchor="middle" font-size="12" fill="#059669">P001=A · P002=B · P003=C</text>
+    <text x="560" y="264" text-anchor="middle" font-size="11" fill="#059669">3 条记录 / 3 次建档，无重复无跳号</text>
+  </svg>
+</section>
+
+<section>
+  <h2><span class="n">3</span>原始证据（设备端 logcat）</h2>
+  <p>测试类 <code>androidTest/.../view/PersonFlowAbacTest.java</code>，
+  <code>RealCue_API35</code> 上跑真实 <code>libInspireFace.so</code> + 真实 FeatureHub，
+  <code>BUILD SUCCESSFUL in 47s</code>，XML <code>tests="2" failures="0" errors="0" skipped="0"</code>。</p>
+  <pre><span class="c"># RealCueFlow · 完整序列用例 fullCastFlowKeepsEveryPersonsNumber</span>
+SETUP featureLength=512 recommendedThreshold=0.48
+<span class="g">STEP1 A_FIRST -> P001 gallery=1</span>
+<span class="g">STEP2 B_FIRST -> P002 gallery=2</span>
+<span class="y">STEP3 SAME_FRAME a=MATCHED(person=1, conf=1.0)
+      b=MATCHED(person=2, conf=1.0) secondA=SKIPPED(person=-1, conf=1.0)</span>
+STEP4 LEAVE_ALL bindings=0 gallery=2
+<span class="g">STEP5 A_REENTRY MATCHED(person=1, conf=0.9849746) expected=P001</span>
+<span class="g">STEP6 B_REENTRY MATCHED(person=2, conf=1.0) expected=P002</span>
+<span class="g">STEP7 C_FIRST -> P003 gallery=3</span>
+<span class="g">FINAL cast=A:P001 B:P002 C:P003 gallery=3 enrollCalls=3 RESULT=PASS</span>
+
+<span class="c"># 第二用例 reentryDoesNotConsumeANewNumber</span>
+NO_SKIP A_REENTRY MATCHED(person=1, conf=0.9849746)
+<span class="g">NO_SKIP B_FIRST -> P002</span>
+run finished: 2 tests, 0 failed, 0 ignored</pre>
+  <div class="note ok"><code>0.9849746</code> 不是「同一份特征跟自己比」的 1.0：
+  A 的重入是从 <strong>JPEG 压缩 + 亮度变化后的另一张图</strong>重新走 native 检测与提特征，
+  再拿去查库得到的真实余弦分。这一步直接对应你说的「又出镜了，检测到还是我」。</div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>为什么号码不会乱</h2>
+  <table>
+    <tr><th>机制</th><th>解决的坑</th></tr>
+    <tr><td><strong>长期 person_id</strong> 存在 FeatureHub 持久化库里，不随 camera Session 重建</td><td>不再出现「退出再进来变 ID 2」</td></tr>
+    <tr><td><strong>三区阈值</strong>：≥0.48 命中 / &lt;0.36 判生人 / 中间继续采样</td><td>一帧糊了不会立刻新建身份</td></tr>
+    <tr><td><strong>连续 3 次无匹配才建档</strong></td><td>短暂遮挡、侧脸不会造成重复建档</td></tr>
+    <tr><td><strong>同帧互斥</strong>（<code>claimedThisFrame</code>）</td><td>同框两张脸不会都拿到 P001（串号）</td></tr>
+    <tr><td><strong>轨迹 TTL + 离场清理</strong>（<code>beginFrame</code> / <code>retainAll(seenTracks)</code>）</td><td>人走了绑定释放，但库记录保留；回来重新查库</td></tr>
+    <tr><td><strong>自增主键 <code>next_id</code></strong>，命中不消耗编号</td><td>新人永远拿下一个空号，A 重入不会把号吃掉</td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--ink3)">视频页与图片页现在都走这套逻辑：
+  <code>FaceTrackingAnalyzer</code>（视频）和
+  <code>FaceDetectionActivity.resolveStableLabels()</code>（图片）
+  都把每张脸的特征交给同一个 <code>FaceRepository</code> / FeatureHub。</p>
+</section>
+
+<section>
+  <h2><span class="n">5</span>诚实边界（别夸大）</h2>
+  <div class="note warn"><strong>只有一张真人样本。</strong>项目里只有 <code>kun.jpg</code>
+  （来自 InspireFace AAR 的 assets）。A 与 A 的重入是<strong>真实特征</strong>；
+  B 和 C 是用 A 的特征构造的两个<strong>互不相似的合成向量</strong>
+  （<code>-A</code> 和「前半取反」），只用来验证「不同人 → 下一个号」的流程分支，
+  <strong>不是真人异人相似度，禁止用于阈值标定</strong>。</div>
+  <ul>
+    <li><span class="pill warn">阈值</span> <code>T_match=0.48 / T_new=0.36</code> 仍是 B0 占位值，
+      两个真人样本未采集。真人场景下陌生人误接受 / 误建档的风险还没测过。</li>
+    <li><span class="pill warn">灰色区</span> <code>FaceRepository.open()</code> 用 SDK 推荐阈值设置
+      FeatureHub 搜索阈值，低分候选被提前过滤，生产线实际只有「高分命中 / 无候选」。</li>
+    <li><span class="pill warn">环境</span> 这次仍是 x86_64 模拟器 + 静态样本，
+      <strong>真机相机实时帧、多人同框、帧率、最终准确率都还没测</strong>。</li>
+    <li><span class="pill warn">APK</span> 本轮测试本身只新增了 <code>androidTest</code>、没改 <code>main/</code>；
+      但<strong>随后已按「重新编译过没」的要求做了一次 <code>--rerun-tasks</code> 强制全量重编译</strong>，
+      交付包已更新为 <strong>116,455,212 B（2026-11-16 14:14:54）</strong>，不再是旧的 117,605,130 B。
+      手机上的旧包不会自动更新，<strong>仍需重新上传安装</strong>才能看到 <code>P001</code>。</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">6</span>真机上怎么验这条流程</h2>
+  <ol class="steps">
+    <li>确认手机上装的是<strong>最新重编译的 <code>app-debug.apk</code></strong>
+      （116,455,212 B / 2026-11-16 14:14:54；人物库按模型隔离，覆盖安装不会丢）。</li>
+    <li>打开你原来那个「人脸跟踪」页 → 切到「视频跟踪」。</li>
+    <li><strong>A 出镜</strong>，稳定约 1 秒后框上出现 <code>P001</code>。</li>
+    <li><strong>B 出镜</strong>（或让另一个人站进来），框上出现 <code>P002</code>；两人同框时两个号不同。</li>
+    <li><strong>A 完全离开画面</strong>几秒，再回来 → 应仍是 <code>P001</code>，不会变成 <code>P003</code>。</li>
+    <li><strong>再来个新人 C</strong> → 应拿到 <code>P003</code>；去「人脸管理」能看到并能搜到这三个号。</li>
+  </ol>
+  <div class="note info">如果真机上出现「A 回来变成新号」或「两个人同框都显示同一个号」，
+  把 logcat 里 <code>RealCueTracking</code> 的 <code>STABLE_*</code> 行发我，
+  我会按 <code>SESSION_READY / STABLE_MATCHED / STABLE_ENROLLED / STABLE_ENROLL_FAILED</code>
+  定位是阈值、特征提取还是轨迹绑定的问题。</div>
+</section>
+
+<section>
+  <h2><span class="n">7</span>产物清单</h2>
+  <table>
+    <tr><th>文件</th><th>内容</th></tr>
+    <tr><td><code>androidTest/.../view/PersonFlowAbacTest.java</code></td><td>2 项设备端用例：完整 A→B→A→C 序列 + 重入不消耗编号</td></tr>
+    <tr><td><code>runtime/logs/model-gradle-20261116-102916.log</code></td><td>connectedDebugAndroidTest 实跑日志</td></tr>
+    <tr><td><code>runtime/logs/model-logcat-20261116-102916.txt</code></td><td>逐步 STEP1~STEP7 / FINAL 原始 logcat</td></tr>
+    <tr><td><code>Unified-StableId-Report.html</code></td><td>上一轮「所有编号统一」的主报告</td></tr>
+    <tr><td><code>PersonFlow-ABAC-Report.html</code></td><td>本报告，可单独打开 / 传手机</td></tr>
+    <tr><td><code>gradle---rerun-tasks-20261116-141428.txt</code></td><td>后续强制全量重编译：65/65 executed</td></tr>
+    <tr><td><code>rebuild-verify-20261116.txt</code></td><td>最终交付包 116,455,212 B 验证</td></tr>
+    <tr><td><code>Rebuild-Verify-Report.html</code></td><td>重编译专项证据报告</td></tr>
+  </table>
+</section>
+
+<div class="foot">RealCue · A→B→A→C 流程验证 · 2026-11-16 · 证据全部落盘于 D 盘项目目录</div>
+</div>
+</body>
+</html>

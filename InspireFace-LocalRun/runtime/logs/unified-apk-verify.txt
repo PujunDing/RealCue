@@ -1,0 +1,185 @@
+=== APK file ===
+-rw-r--r-- 1 pjd02 197609 117605130 Nov 15 22:25 D:/paper/RealCue/InspireFace-LocalRun/android-demo/app/build/outputs/apk/debug/app-debug.apk
+
+=== aapt2 dump badging (key lines) ===
+package: name='com.example.inspireface_example' versionCode='2' versionName='1.0.1' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+targetSdkVersion:'35'
+uses-permission: name='android.permission.CAMERA'
+application-label:'InspireFace-Example'
+application-label-af:'InspireFace-Example'
+application-label-am:'InspireFace-Example'
+application-label-ar:'InspireFace-Example'
+application-label-as:'InspireFace-Example'
+application-label-az:'InspireFace-Example'
+application-label-be:'InspireFace-Example'
+application-label-bg:'InspireFace-Example'
+application-label-bn:'InspireFace-Example'
+application-label-bs:'InspireFace-Example'
+application-label-ca:'InspireFace-Example'
+application-label-cs:'InspireFace-Example'
+application-label-da:'InspireFace-Example'
+application-label-de:'InspireFace-Example'
+application-label-el:'InspireFace-Example'
+application-label-en-AU:'InspireFace-Example'
+application-label-en-CA:'InspireFace-Example'
+application-label-en-GB:'InspireFace-Example'
+application-label-en-IN:'InspireFace-Example'
+application-label-en-XC:'InspireFace-Example'
+application-label-es:'InspireFace-Example'
+application-label-es-419:'InspireFace-Example'
+application-label-es-US:'InspireFace-Example'
+application-label-et:'InspireFace-Example'
+application-label-eu:'InspireFace-Example'
+application-label-fa:'InspireFace-Example'
+application-label-fi:'InspireFace-Example'
+application-label-fr:'InspireFace-Example'
+application-label-fr-CA:'InspireFace-Example'
+application-label-gl:'InspireFace-Example'
+application-label-gu:'InspireFace-Example'
+application-label-hi:'InspireFace-Example'
+application-label-hr:'InspireFace-Example'
+application-label-hu:'InspireFace-Example'
+application-label-hy:'InspireFace-Example'
+application-label-in:'InspireFace-Example'
+application-label-is:'InspireFace-Example'
+application-label-it:'InspireFace-Example'
+application-label-iw:'InspireFace-Example'
+application-label-ja:'InspireFace-Example'
+application-label-ka:'InspireFace-Example'
+application-label-kk:'InspireFace-Example'
+application-label-km:'InspireFace-Example'
+application-label-kn:'InspireFace-Example'
+application-label-ko:'InspireFace-Example'
+application-label-ky:'InspireFace-Example'
+application-label-lo:'InspireFace-Example'
+application-label-lt:'InspireFace-Example'
+application-label-lv:'InspireFace-Example'
+application-label-mk:'InspireFace-Example'
+application-label-ml:'InspireFace-Example'
+application-label-mn:'InspireFace-Example'
+application-label-mr:'InspireFace-Example'
+application-label-ms:'InspireFace-Example'
+application-label-my:'InspireFace-Example'
+application-label-nb:'InspireFace-Example'
+application-label-ne:'InspireFace-Example'
+application-label-nl:'InspireFace-Example'
+application-label-or:'InspireFace-Example'
+application-label-pa:'InspireFace-Example'
+application-label-pl:'InspireFace-Example'
+application-label-pt:'InspireFace-Example'
+application-label-pt-BR:'InspireFace-Example'
+application-label-pt-PT:'InspireFace-Example'
+application-label-ro:'InspireFace-Example'
+application-label-ru:'InspireFace-Example'
+application-label-si:'InspireFace-Example'
+application-label-sk:'InspireFace-Example'
+application-label-sl:'InspireFace-Example'
+application-label-sq:'InspireFace-Example'
+application-label-sr:'InspireFace-Example'
+application-label-sr-Latn:'InspireFace-Example'
+application-label-sv:'InspireFace-Example'
+application-label-sw:'InspireFace-Example'
+application-label-ta:'InspireFace-Example'
+application-label-te:'InspireFace-Example'
+application-label-th:'InspireFace-Example'
+application-label-tl:'InspireFace-Example'
+application-label-tr:'InspireFace-Example'
+application-label-uk:'InspireFace-Example'
+application-label-ur:'InspireFace-Example'
+application-label-uz:'InspireFace-Example'
+application-label-vi:'InspireFace-Example'
+application-label-zh:'InspireFace 示例'
+application-label-zh-CN:'InspireFace 示例'
+application-label-zh-HK:'InspireFace-Example'
+application-label-zh-TW:'InspireFace-Example'
+application-label-zu:'InspireFace-Example'
+launchable-activity: name='com.example.inspireface_example.HomeActivity'  label='' icon=''
+
+=== manifest activities ===
+
+=== new/changed string resources ===
+    resource 0x7f0f009e string/detection_face_selected_stable
+    resource 0x7f0f00cc string/face_id_format
+    resource 0x7f0f00e0 string/home_detection_desc
+    resource 0x7f0f01dd string/recognition_result_details
+    resource 0x7f0f01f0 string/search_faces
+
+=== apksigner verify ===
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: C=US, O=Android, CN=Android Debug
+Signer #1 certificate SHA-256 digest: 0d35783bc1ae6c32d861355c51ea261a8f62ab230aa399e1aa83d40b5c338dc3
+Signer #1 certificate SHA-1 digest: 7182199f3d9bd3a989d1fec460ba8534e963a75e
+Signer #1 certificate MD5 digest: 74826f39fb6c19544abf13855f0e2459
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 2048
+Signer #1 public key SHA-256 digest: 17cf5760a97d3e770d092146989c57e1976f55333f3a89885d70a2abec787810
+Signer #1 public key SHA-1 digest: a65ec894d0e16d5b7bdad15f63f225774a75adb6
+Signer #1 public key MD5 digest: aa861def1f48e491b1d1884ef817ee39
+
+=== APK zip / ABI ===
+entries= 935
+abis= ['arm64-v8a', 'armeabi-v7a', 'x86_64']
+dex= ['classes.dex', 'classes2.dex', 'classes3.dex', 'classes4.dex', 'classes5.dex', 'classes6.dex', 'classes7.dex', 'classes8.dex', 'classes9.dex']
+has_resources_arsc= True
+
+=== string values in resources.arsc ===
+unknown option '--values'.
+
+dump resources [options] files...
+
+Options:
+ --no-values                                       Suppresses output of values when displaying resource tables.
+ -v                                                Enables verbose logging.
+ -h                                                Displays this help menu
+
+=== manifest activity names ===
+          E: activity (line=45)
+          E: activity (line=49)
+          E: activity (line=53)
+          E: activity (line=57)
+          E: activity (line=61)
+          E: activity (line=65)
+          E: activity (line=69)
+          E: activity (line=73)
+          E: activity (line=77)
+          E: activity (line=81)
+          E: activity (line=85)
+          E: activity (line=89)
+
+=== string values (aapt2 default prints values) ===
+    resource 0x7f0f009e string/detection_face_selected_stable
+      () "%1$s selected · %2$d face(s) · %3$d landmarks returned"
+      (zh) "已选中 %1$s · 共 %2$d 张人脸 · SDK 返回 %3$d 个关键点"
+--
+    resource 0x7f0f00cc string/face_id_format
+      () "P%1$03d"
+      (zh) "P%1$03d"
+--
+    resource 0x7f0f00e0 string/home_detection_desc
+      () "Detect faces, inspect 106-point landmarks, and show persistent P001/P002 ids"
+      (zh) "检测人脸、查看 106 点关键点，并显示长期编号 P001/P002"
+--
+    resource 0x7f0f01dd string/recognition_result_details
+      () "P%1$03d · cosine confidence %2$.3f · threshold %3$.3f"
+      (zh) "P%1$03d · 模型置信度 %2$.3f · 阈值 %3$.3f"
+
+=== manifest activity names (all name attrs) ===
+          E: activity (line=45)
+          E: activity (line=49)
+          E: activity (line=53)
+          E: activity (line=57)
+          E: activity (line=61)
+          E: activity (line=65)
+          E: activity (line=69)
+          E: activity (line=73)
+          E: activity (line=77)
+          E: activity (line=81)
+          E: activity (line=85)
+          E: activity (line=89)

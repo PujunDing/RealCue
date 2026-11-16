@@ -1,0 +1,119 @@
+CMD: "D:\paper\移动端人脸检测\InspireFace-本机试跑\runtime\gradle\gradle-8.7\bin\gradle.bat" --no-daemon -p "D:\paper\移动端人脸检测\InspireFace-本机试跑\android-demo" -PinspirefaceSdkSource=local -Pandroid.overridePathCheck=true :app:assembleDebug :app:testDebugUnitTest
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+Checking the license for package Android SDK Build-Tools 34 in D:\paper\�ƶ����������\InspireFace-��������\runtime\android\licenses
+License for package Android SDK Build-Tools 34 accepted.
+Preparing "Install Android SDK Build-Tools 34 v.34.0.0".
+"Install Android SDK Build-Tools 34 v.34.0.0" ready.
+Installing Android SDK Build-Tools 34 in D:\paper\�ƶ����������\InspireFace-��������\runtime\android\build-tools\34.0.0
+"Install Android SDK Build-Tools 34 v.34.0.0" complete.
+"Install Android SDK Build-Tools 34 v.34.0.0" finished.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig
+> Task :app:javaPreCompileDebug
+> Task :app:checkDebugAarMetadata
+> Task :app:generateDebugResValues
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:mergeDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:processDebugJavaRes NO-SOURCE
+> Task :app:compressDebugAssets
+> Task :app:mergeDebugJavaResource
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses
+> Task :app:desugarDebugFileDependencies
+> Task :app:mergeDebugNativeLibs
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeLibDexDebug
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libInspireFace.so, libimage_processing_util_jni.so, libsurface_util_jni.so.
+
+> Task :app:mergeExtDexDebug
+> Task :app:processDebugResources
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:processDebugUnitTestJavaRes
+11-15 15:09:33.322 44996 35792 W aapt2.exe: AssetsProvider.cpp:114 Failed to stat file 'D:\paper\�ƶ����������\InspireFace-��������\runtime\android\platforms\android-35\android.jar': No such file or directory
+
+
+> Task :app:compileDebugJavaWithJavac
+ע: D:\paper\�ƶ����������\InspireFace-��������\android-demo\app\src\main\java\com\example\inspireface_example\plus\CapturePacket.javaʹ�û򸲸����ѹ�ʱ�� API��
+ע: �й���ϸ��Ϣ, ��ʹ�� -Xlint:deprecation ���±��롣
+
+> Task :app:dexBuilderDebug
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:mergeProjectDexDebug
+> Task :app:compileDebugUnitTestJavaWithJavac
+
+> Task :app:testDebugUnitTest
+
+com.example.inspireface_example.DetectorDefaultsTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.ExampleUnitTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.permission.CameraPermissionPolicyTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.plus.PlusCaptureTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.plus.PlusFaceGuideTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.plus.PlusLiveContractTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.plus.PlusProtocolTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.sdk.JniDataContractTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.view.FaceStabilityGateTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+com.example.inspireface_example.view.TrackBoxSmootherTest > initializationError FAILED
+    java.lang.ClassNotFoundException at BuiltinClassLoader.java:641
+
+10 tests completed, 10 failed
+
+> Task :app:testDebugUnitTest FAILED
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///D:/paper/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E4%BA%BA%E8%84%B8%E6%A3%80%E6%B5%8B/InspireFace-%E6%9C%AC%E6%9C%BA%E8%AF%95%E8%B7%91/android-demo/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 3m 56s
+40 actionable tasks: 40 executed

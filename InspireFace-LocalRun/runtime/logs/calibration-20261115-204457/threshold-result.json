@@ -1,0 +1,16 @@
+{
+  "mode": "external_samples",
+  "model": "Pikachu",
+  "officialThreshold": 0.4800,
+  "featureLength": 512,
+  "sampleCountA": 3,
+  "sampleCountB": 2,
+  "noFaceA": 0,
+  "noFaceB": 0,
+  "doNotUseForThreshold": true,
+  "falseAcceptAtOfficial": true,
+  "falseRejectAtOfficial": false,
+  "resultDir": "/storage/emulated/0/Android/data/com.example.inspireface_example/files/calibration",
+  "warning": "A/ and B/ look like the SAME PERSON (different-person scores are as high as same-person scores). Put two genuinely different people in the two folders. Thresholds NOT usable.",
+  "stats": {"sameCount":4,"diffCount":6,"sameMin":1.0000,"sameMax":1.0000,"sameMean":1.0000,"sameP05":1.0000,"diffMin":1.0000,"diffMax":1.0000,"diffMean":1.0000,"diffP95":1.0000,"hasDiffData":true,"separable":false,"margin":0.0000,"matchThreshold":1.0000,"newThreshold":0.8800,"recallAtMatch":1.0000,"falseAcceptAtMatch":1.0000}
+}

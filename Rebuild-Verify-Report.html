@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RealCue · 强制全量重编译核验报告</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --ink2:#4b5563; --ink3:#6b7280;
+    --line:#e5e9f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669;
+    --warn:#d97706; --danger:#dc2626; --soft:#eef2ff; --soft2:#ecfeff;
+    --oksoft:#ecfdf5; --warnsoft:#fffbeb; --dangersoft:#fef2f2;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 20px 72px}
+  header{background:linear-gradient(135deg,#4f46e5 0%,#0ea5e9 100%);
+    color:#fff;border-radius:18px;padding:30px 32px;box-shadow:0 10px 30px rgba(79,70,229,.18)}
+  header .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  header h1{margin:8px 0 6px;font-size:27px;line-height:1.3}
+  header p{margin:0;opacity:.92;font-size:14px}
+  .tagrow{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+    padding:4px 11px;border-radius:999px;font-size:12px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 26px;margin-top:18px;box-shadow:0 2px 8px rgba(16,24,40,.04)}
+  h2{font-size:19px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+    border-radius:8px;background:var(--soft);color:var(--brand);font-size:14px;font-weight:700}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--ink)}
+  p{margin:8px 0}
+  .lead{background:var(--soft);border-left:4px solid var(--brand);border-radius:10px;
+    padding:14px 16px;font-size:15px}
+  .lead strong{color:var(--brand)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+  .stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fcfdff}
+  .stat .v{font-size:24px;font-weight:750;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--ink3);margin-top:2px}
+  .stat.ok .v{color:var(--ok)} .stat.brand .v{color:var(--brand)}
+  .stat.warn .v{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:650;color:var(--ink2)}
+  td code,p code,li code,.mono{font-family:var(--mono);font-size:12.5px;
+    background:#f1f5f9;border-radius:4px;padding:1px 5px}
+  .yes{color:var(--ok);font-weight:650} .no{color:var(--danger);font-weight:650}
+  .half{color:var(--warn);font-weight:650}
+  .note{border-radius:10px;padding:12px 15px;margin-top:12px;font-size:13.5px}
+  .note.warn{background:var(--warnsoft);border:1px solid #fde68a}
+  .note.danger{background:var(--dangersoft);border:1px solid #fecaca}
+  .note.ok{background:var(--oksoft);border:1px solid #a7f3d0}
+  .note.info{background:var(--soft2);border:1px solid #a5f3fc}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:15px 17px;
+    overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.75;margin:12px 0 0}
+  pre .c{color:#94a3b8} pre .g{color:#86efac} pre .y{color:#fcd34d} pre .b{color:#7dd3fc}
+  ul{margin:8px 0;padding-left:22px} li{margin:5px 0}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0 0}
+  .steps li{counter-increment:s;position:relative;padding:10px 14px 10px 46px;
+    border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#fcfdff}
+  .steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:24px;height:24px;
+    border-radius:7px;background:var(--brand);color:#fff;font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center}
+  .foot{text-align:center;color:var(--ink3);font-size:12px;margin-top:26px}
+  .bar{height:9px;border-radius:99px;background:#e8edf5;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#4f46e5,#0ea5e9)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:650}
+  .pill.ok{background:var(--oksoft);color:var(--ok)}
+  .pill.warn{background:var(--warnsoft);color:var(--warn)}
+  .pill.info{background:var(--soft);color:var(--brand)}
+  svg{display:block;width:100%;height:auto;margin:6px auto 0}
+  .tl{position:relative;margin:14px 0 0;padding-left:24px;border-left:2px solid var(--line)}
+  .tl .ev{position:relative;margin-bottom:16px}
+  .tl .ev::before{content:"";position:absolute;left:-30px;top:6px;width:11px;height:11px;
+    border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 0 0 2px var(--brand)}
+  .tl .ev.q::before{background:var(--warn);box-shadow:0 0 0 2px var(--warn)}
+  .tl .ev.g::before{background:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+  .tl .t{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+  .tl .d{font-size:14px}
+  @media(max-width:600px){header{padding:22px}section{padding:18px 16px}.wrap{padding:16px 12px 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RealCue / Build Verification</div>
+  <h1>重新编译过没？—— 强制全量重编译核验</h1>
+  <p>回答「你重新编译过没？」：已重编，而且是 <code>--rerun-tasks</code> 强制全量重编译，不是缓存。</p>
+  <div class="tagrow">
+    <span class="tag">2026-11-16 14:14</span>
+    <span class="tag">65 / 65 tasks executed</span>
+    <span class="tag">APK 116,455,212 B</span>
+    <span class="tag">新包复测 4/4 通过</span>
+    <span class="tag">证据全部落 D 盘</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">1</span>一句话结论</h2>
+  <div class="lead"><strong>重新编译了。</strong>先核实旧状态发现疑点，随后用
+  <code>--rerun-tasks</code> 让 <strong>65 个 task 全部重新 executed</strong>（无 <code>UP-TO-DATE</code> 复用），
+  重新生成 APK、重新验证签名/资源/ABI/DEX 符号，并<strong>用这个新包重新装到模拟器再跑一遍设备端测试（4/4 通过）</strong>。</div>
+  <div class="grid">
+    <div class="stat ok"><div class="v">65 / 65</div><div class="l">Gradle tasks executed</div></div>
+    <div class="stat brand"><div class="v">116,455,212 B</div><div class="l">新 APK 大小</div></div>
+    <div class="stat ok"><div class="v">68 / 0</div><div class="l">JVM 单测 / 失败</div></div>
+    <div class="stat ok"><div class="v">4 / 4</div><div class="l">新包设备端复测</div></div>
+  </div>
+  <div class="bar"><i style="width:100%"></i></div>
+  <div class="note ok">交付以 <code>app/build/outputs/apk/debug/app-debug.apk</code>
+  （<strong>116,455,212 B · 2026-11-16 14:14:54</strong>）为准。手机旧包不会自动更新，必须重新上传安装。</div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>为什么值得单独重编一次：核实出的疑点</h2>
+  <p>先查时间戳，不猜：</p>
+  <table>
+    <tr><th>对象</th><th>时间 / 大小</th><th>说明</th></tr>
+    <tr><td>上一版 <code>app-debug.apk</code></td><td>2026-11-15 22:25:08 · 117,605,130 B</td><td class="yes">比源码新，说明「统一编号」那轮确实出过包</td></tr>
+    <tr><td><code>main/</code> 最后改动 <code>FaceDetectionActivity.java</code></td><td>2026-11-15 22:22:21</td><td>早于旧包，旧包已包含该改动</td></tr>
+    <tr><td>A→B→A→C 流程验证（2026-11-16 10:29）</td><td>只新增 <code>androidTest</code></td><td class="half">日志里 <code>compileDebugJavaWithJavac UP-TO-DATE</code>、<code>packageDebug UP-TO-DATE</code>，<strong>那一轮没有重出 APK</strong></td></tr>
+  </table>
+  <div class="note warn">所以严格回答是：<strong>之前确实编过、但最近那轮流程测试没有重出包</strong>。
+  为彻底排除「靠缓存说话」的可能，直接强制全量重编译一次。</div>
+
+  <h3>时间线</h3>
+  <div class="tl">
+    <div class="ev"><div class="t">11-15 22:22:21</div><div class="d"><code>main/</code> 最后一次改动（统一编号改造收尾）</div></div>
+    <div class="ev"><div class="t">11-15 22:25:08</div><div class="d">出包 117,605,130 B；<code>UnifiedStableIdTest</code> 4/4 通过</div></div>
+    <div class="ev"><div class="t">11-16 10:29</div><div class="d">新增 <code>PersonFlowAbacTest</code>；<code>connectDebugAndroidTest</code> 全程 <code>UP-TO-DATE</code>，<strong>APK 未重出</strong></div></div>
+    <div class="ev q"><div class="t">11-16 14:14</div><div class="d">用户问「你重新编译过没？」→ 触发强制全量重编译</div></div>
+    <div class="ev g"><div class="t">11-16 14:14:54</div><div class="d"><code>--rerun-tasks</code> 完成，新包 116,455,212 B</div></div>
+    <div class="ev g"><div class="t">11-16 14:16–14:20</div><div class="d">用新包重装模拟器，<code>UnifiedStableIdTest</code> 再次 4/4 通过</div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>执行的命令</h2>
+<pre><span class="c"># 统一 gate：自动注入 D 盘 GRADLE_USER_HOME / --offline / local AAR</span>
+python runtime/run_gradle.py <span class="y">--rerun-tasks</span> \
+    :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest
+
+<span class="c"># 展开后的实际 Gradle 命令行</span>
+gradle.bat --no-daemon --offline -p "D:\paper\RealCue\InspireFace-LocalRun\android-demo" \
+  -PinspirefaceSdkSource=local <span class="y">--rerun-tasks</span> \
+  :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest</pre>
+  <div class="note info"><code>--rerun-tasks</code> 会让 Gradle 忽略所有增量 / 缓存判定，
+  把每个 task 都真正执行一遍。日志里 <code>65 actionable tasks: 65 executed</code>
+  就是「没有一个是 UP-TO-DATE」的直接证据。</div>
+<pre><span class="g">BUILD SUCCESSFUL in 29s</span>
+<span class="g">65 actionable tasks: 65 executed</span>
+&gt; Task :app:compileDebugJavaWithJavac
+&gt; Task :app:compileDebugAndroidTestJavaWithJavac
+&gt; Task :app:compileDebugUnitTestJavaWithJavac
+&gt; Task :app:testDebugUnitTest
+&gt; Task :app:packageDebug
+&gt; Task :app:assembleDebugAndroidTest
+&gt; Task :app:assembleDebug</pre>
+  <div class="note warn">日志末尾有一条 <code>CapturePacket.java</code> 的
+  「使用或覆盖了已过时的 API」警告（终端里显示为 GBK 乱码），是官方 Demo 原有代码，
+  <strong>非致命、不影响构建</strong>。</div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>新包本身验了什么</h2>
+  <table>
+    <tr><th>检查</th><th>结果</th></tr>
+    <tr><td>文件</td><td class="yes">116,455,212 B · mtime 2026-11-16 14:14:54.459532 · 935 entries</td></tr>
+    <tr><td>androidTest APK</td><td class="yes">672,252 B · mtime 14:14:56</td></tr>
+    <tr><td><code>aapt2 dump badging</code></td><td class="yes"><code>versionCode=2 versionName=1.0.1</code>、<code>targetSdk 35</code>、<code>CAMERA</code>、launchable <code>HomeActivity</code></td></tr>
+    <tr><td><code>aapt2 dump resources</code></td><td class="yes"><code>P%1$03d</code>（中/英）、<code>P%1$03d · cosine confidence …</code>、<code>detection_face_selected_stable</code> 实际值都在 <code>resources.arsc</code></td></tr>
+    <tr><td><code>apksigner verify --verbose</code></td><td class="yes"><code>Verifies</code>，<code>Verified using v2 scheme: true</code>，1 signer（Android Debug）</td></tr>
+    <tr><td>ABI / native libs</td><td class="yes"><code>arm64-v8a</code> / <code>armeabi-v7a</code> / <code>x86_64</code> 三套 <code>libInspireFace.so</code>（13.7 MB / 9.9 MB / 13.5 MB）齐全</td></tr>
+    <tr><td>模型资产</td><td class="yes">Megatron 61,644,800 B、Pikachu 17,203,200 B、<code>kun.jpg</code> 217,529 B、<code>version.txt</code> 齐全</td></tr>
+    <tr><td>DEX</td><td class="yes"><code>classes.dex</code> … <code>classes9.dex</code> 共 9 个</td></tr>
+  </table>
+
+  <h3>DEX 符号实查：本轮新代码确实打进了这个包</h3>
+<pre>SYMBOL PersonIdResolver                 classes4.dex,classes6.dex,classes7.dex
+SYMBOL RealCueTracking                  classes7.dex
+SYMBOL RealCueAutoId                    classes7.dex
+SYMBOL formatLabel                      classes4.dex,classes6.dex
+SYMBOL resolveStableLabels              classes4.dex
+SYMBOL detectWithLandmarksAndFeatures   classes4.dex,classes6.dex
+SYMBOL submitLabels                     classes7.dex
+SYMBOL setFaceLabels                    classes4.dex,classes8.dex
+SYMBOL createFaceTrackingSession        classes7.dex
+SYMBOL P%03d                            classes6.dex</pre>
+  <div class="note info">也就是说：<strong>不是拿旧包改个说法</strong>，
+  长期编号相关的类、方法、<code>P%03d</code> 格式串都在这个重新生成的包内。</div>
+  <div class="note warn">新包比旧包小 <strong>1,149,918 B</strong>，是重新打包的压缩差异。
+  已逐项核对 native libs、两个模型、样本图、9 个 dex、<code>resources.arsc</code> 全部在包内，没有少东西。</div>
+</section>
+
+<section>
+  <h2><span class="n">5</span>用新包重装后再跑一次设备端测试</h2>
+<pre>CMD: gradle.bat --no-daemon -p ".../android-demo" -PinspirefaceSdkSource=local \
+  -Pandroid.testInstrumentationRunnerArguments.class=\
+  com.example.inspireface_example.view.UnifiedStableIdTest \
+  :app:connectedDebugAndroidTest
+
+Starting 4 tests on RealCue_API35(AVD) - 15
+RealCue_API35(AVD) - 15 Tests 1/4 completed. (0 skipped) (0 failed)
+RealCue_API35(AVD) - 15 Tests 2/4 completed. (0 skipped) (0 failed)
+RealCue_API35(AVD) - 15 Tests 4/4 completed. (0 skipped) (0 failed)
+Finished 4 tests on RealCue_API35(AVD) - 15
+<span class="g">BUILD SUCCESSFUL in 2m 14s</span></pre>
+  <div class="grid">
+    <div class="stat ok"><div class="v">4 / 4</div><div class="l">测试通过</div></div>
+    <div class="stat ok"><div class="v">0</div><div class="l">failures / errors / skipped</div></div>
+    <div class="stat brand"><div class="v">P001</div><div class="l">同人换画面重入标签</div></div>
+  </div>
+<pre>REENTRY first=P001 second=P001 gallery=1</pre>
+  <div class="note info">这次设备端日志里又出现 <code>packageDebug UP-TO-DATE</code>，
+  <strong>是正常的</strong>：它复用的是上面 <code>--rerun-tasks</code> 刚生成的新包，
+  不是跳过编译。测试安装到模拟器的就是那个 116,455,212 B 的新 APK。</div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>证据链</h2>
+  <table>
+    <tr><th>文件</th><th>内容</th></tr>
+    <tr><td><code>runtime/logs/gradle---rerun-tasks-20261116-141428.txt</code></td><td>强制全量重编译原始日志；65/65 executed、三个 javac task、单测 task</td></tr>
+    <tr><td><code>runtime/logs/rebuild-verify-20261116.txt</code></td><td>新 APK 的 badging / resources 实际值 / apksigner / ZIP 结构 / ABI / DEX 符号 / 资产明细</td></tr>
+    <tr><td><code>runtime/logs/model-gradle-20261116-141608.log</code></td><td>用新包重装后 <code>connectedDebugAndroidTest</code> 实跑日志</td></tr>
+    <tr><td><code>runtime/logs/model-logcat-20261116-141608.txt</code></td><td>对应 logcat 原始输出</td></tr>
+    <tr><td><code>runtime/logs/model-emulator-20261116-141608.log</code></td><td>模拟器启动 / 安装 / 测试调度日志</td></tr>
+    <tr><td><code>app-debug.apk</code></td><td><strong>最终交付包 116,455,212 B</strong></td></tr>
+    <tr><td><code>LocalRun-Plan.md</code> / <code>Research-PersonGallery-Matching.md</code></td><td>已同步追加「强制全量重编译复核」章节 / 附录 F</td></tr>
+    <tr><td><code>Unified-StableId-Report.html</code> / <code>PersonFlow-ABAC-Report.html</code></td><td>已把旧 APK 大小 117,605,130 B 的说法更新为最新值</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">7</span>诚实边界：重编译证明了什么、没证明什么</h2>
+  <table>
+    <tr><th>命题</th><th>状态</th></tr>
+    <tr><td>当前 <code>main/</code> 源码确实被编进了这个 APK</td><td class="yes">已证明（全量重编 + DEX 符号实查）</td></tr>
+    <tr><td>APK 签名合法、可安装、结构完整</td><td class="yes">已证明（apksigner / badging / ZIP 明细）</td></tr>
+    <tr><td>新包里「图片同人换画面重入仍是 P001」</td><td class="yes">已证明（设备端 4/4）</td></tr>
+    <tr><td>A→B→A→C 完整流程 P001/P002/P003</td><td class="yes">上一轮设备端 2/2 已证明（<code>PersonFlowAbacTest</code>）</td></tr>
+    <tr><td>真机「人脸跟踪」页视频 tab 的 <code>P001</code> 实时效果</td><td class="no">未证明，需你在 Xiaomi 14 Pro 实机确认</td></tr>
+    <tr><td>阈值准确度（异人分数分布）</td><td class="no">未证明，仍只有 <code>kun.jpg</code> 一张真人样本，<code>0.48 / 0.36</code> 是 B0 占位值</td></tr>
+    <tr><td>多人同框、帧率、跨光照 / 跨姿态准确率</td><td class="no">未测</td></tr>
+  </table>
+  <div class="note danger"><strong>重编译 ≠ 真机效果已验证。</strong>
+  这一轮只回答「代码有没有真的编进包」。功能边界一条都没因为重编译而收口。</div>
+</section>
+
+<section>
+  <h2><span class="n">8</span>接下来做什么</h2>
+  <ol class="steps">
+    <li><strong>重新上传安装新 APK</strong>（116,455,212 B / 14:14:54）到手机，覆盖安装即可，人物库按模型隔离不会丢。</li>
+    <li>打开你原来那个「人脸跟踪」页：图像检测选照片看 <code>P001</code>；视频跟踪露脸拿 <code>P001</code>，<strong>完全离开画面几秒再回来</strong>应仍是 <code>P001</code>；换第二个人拿 <code>P002</code>。</li>
+    <li>若出现「A 回来变新号」或「两人同框同号」，把 logcat 里 <code>RealCueTracking</code> 的 <code>STABLE_*</code> 行发回。</li>
+    <li>采集两个真人各 3~5 张，跑 <code>runtime/calibrate_threshold.py</code> 得到真实 <code>T_match</code> / <code>T_new</code>，替换占位阈值。</li>
+    <li>若需要灰色区生效，把 <code>FaceRepository.open()</code> 的 FeatureHub 搜索阈值改成可配置。</li>
+  </ol>
+  <div class="note info">另需你确认一个语义：你说「再来个新人 2 号」，
+  当前实现是<strong>「下一个未占用的自增主键」</strong>，即 1、2 已占用时新人拿 <code>P003</code>；
+  如果你要的是「复用 2 号」或「每轮重新编号」，告诉我，改 <code>PersonIdResolver</code> 的分配策略即可。</div>
+</section>
+
+<div class="foot">RealCue · 强制全量重编译核验 · 2026-11-16 · 证据全部落盘于 D 盘项目目录</div>
+</div>
+</body>
+</html>

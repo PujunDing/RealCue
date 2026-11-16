@@ -1,0 +1,16 @@
+group,pair,score
+same,A#0|A#1,0.9907
+same,A#0|A#2,0.9924
+same,A#1|A#2,0.9885
+same,B#0|B#1,0.9845
+same,B#0|B#2,0.9523
+same,B#1|B#2,0.9622
+diff,A#0|B#0,0.9886
+diff,A#0|B#1,0.9910
+diff,A#0|B#2,0.9615
+diff,A#1|B#0,0.9841
+diff,A#1|B#1,0.9871
+diff,A#1|B#2,0.9610
+diff,A#2|B#0,0.9798
+diff,A#2|B#1,0.9876
+diff,A#2|B#2,0.9617

@@ -1,0 +1,65 @@
+=== STAGE B APK VERIFY ===
+APK: D:/paper/RealCue/InspireFace-LocalRun/android-demo/app/build/outputs/apk/debug/app-debug.apk
+size: 117604366 bytes
+
+--- aapt2 dump badging (package / sdk / launcher / perms) ---
+package: name='com.example.inspireface_example' versionCode='2' versionName='1.0.1' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+targetSdkVersion:'35'
+uses-permission: name='android.permission.CAMERA'
+application-label:'InspireFace-Example'
+application-label-af:'InspireFace-Example'
+application-label-am:'InspireFace-Example'
+application-label-ar:'InspireFace-Example'
+application-label-as:'InspireFace-Example'
+application-label-az:'InspireFace-Example'
+application-label-be:'InspireFace-Example'
+application-label-bg:'InspireFace-Example'
+application-label-bn:'InspireFace-Example'
+application-label-bs:'InspireFace-Example'
+application-label-ca:'InspireFace-Example'
+application-label-cs:'InspireFace-Example'
+application-label-da:'InspireFace-Example'
+application-label-de:'InspireFace-Example'
+application-label-el:'InspireFace-Example'
+application-label-en-AU:'InspireFace-Example'
+application-label-en-CA:'InspireFace-Example'
+application-label-en-GB:'InspireFace-Example'
+application-label-en-IN:'InspireFace-Example'
+application-label-en-XC:'InspireFace-Example'
+application-label-es:'InspireFace-Example'
+application-label-es-419:'InspireFace-Example'
+application-label-es-US:'InspireFace-Example'
+application-label-et:'InspireFace-Example'
+application-label-eu:'InspireFace-Example'
+application-label-fa:'InspireFace-Example'
+application-label-fi:'InspireFace-Example'
+
+--- AndroidManifest.xml : new AutoIdActivity registration ---
+          E: activity (line=65)
+            A: http://schemas.android.com/apk/res/android:theme(0x01010000)=@0x7f100235
+            A: http://schemas.android.com/apk/res/android:name(0x01010003)="com.example.inspireface_example.AutoIdActivity" (Raw: "com.example.inspireface_example.AutoIdActivity")
+            A: http://schemas.android.com/apk/res/android:exported(0x01010010)=false
+          E: activity (line=69)
+            A: http://schemas.android.com/apk/res/android:theme(0x01010000)=@0x7f100235
+            A: http://schemas.android.com/apk/res/android:name(0x01010003)="com.example.inspireface_example.FaceAttributeActivity" (Raw: "com.example.inspireface_example.FaceAttributeActivity")
+            A: http://schemas.android.com/apk/res/android:exported(0x01010010)=false
+          E: activity (line=73)
+
+--- apksigner verify --verbose ---
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: C=US, O=Android, CN=Android Debug
+Signer #1 certificate SHA-256 digest: 0d35783bc1ae6c32d861355c51ea261a8f62ab230aa399e1aa83d40b5c338dc3
+Signer #1 certificate SHA-1 digest: 7182199f3d9bd3a989d1fec460ba8534e963a75e
+Signer #1 certificate MD5 digest: 74826f39fb6c19544abf13855f0e2459
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 2048
+Signer #1 public key SHA-256 digest: 17cf5760a97d3e770d092146989c57e1976f55333f3a89885d70a2abec787810
+Signer #1 public key SHA-1 digest: a65ec894d0e16d5b7bdad15f63f225774a75adb6
+Signer #1 public key MD5 digest: aa861def1f48e491b1d1884ef817ee39
