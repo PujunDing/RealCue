@@ -26,6 +26,7 @@
 | 了解需求来源 | [Research-Mobile-Realtime-FaceID.md](Research-Mobile-Realtime-FaceID.md) |
 | 了解完整试跑过程与每次构建证据 | [InspireFace-LocalRun/LocalRun-Plan.md](InspireFace-LocalRun/LocalRun-Plan.md) |
 | 看可视化验证报告 | 根目录 `*.html`（见第 11 节索引） |
+| 验证云侧大模型是否在线、能否推理 | [cloud-model-probe/README.md](cloud-model-probe/README.md)（探针脚本 + 实测结论） |
 | 直接读业务源码 | `InspireFace-LocalRun/android-demo/app/src/main/java/com/example/inspireface_example/` |
 
 ## 2. 仓库里没有什么
@@ -64,6 +65,10 @@ RealCue/
 ├── ENVIRONMENT_SETUP.md          ← 从零配环境的详细版
 ├── .gitignore                    ← 仓库卫生规则
 ├── Research-*.md / *.html        ← 调研文档与可视化报告
+├── cloud-model-probe/            ← 云侧模型在线与推理探针（未来端云交互）
+│   ├── probe_model.py            ← 三段式自检脚本（仅 Python 标准库）
+│   ├── README.md                 ← 用法 / 参数 / thinking 陷阱 / 接口约定
+│   └── results/                  ← 原始响应与结构化汇总证据
 └── InspireFace-LocalRun/
     ├── LocalRun-Plan.md          ← 试跑全过程与证据
     ├── android-demo/             ← Android 工程（Gradle 根）
@@ -288,4 +293,6 @@ MTP 方式把 APK 复制到手机内部存储目录在本机受会话隔离限�
 | [Unified-StableId-Report.html](Unified-StableId-Report.html) | 统一所有编号显示为长期 `person_id` |
 | [PersonFlow-ABAC-Report.html](PersonFlow-ABAC-Report.html) | A→B→A→C 完整流程验证 |
 | [Rebuild-Verify-Report.html](Rebuild-Verify-Report.html) | 强制全量重编译与复核证据 |
+| [Cloud-Model-Probe-Report.html](Cloud-Model-Probe-Report.html) | 云侧模型在线与推理探测、thinking 假阴性诊断 |
+| [cloud-model-probe/README.md](cloud-model-probe/README.md) | 探针用法与端云交互接口约定 |
 | [InspireFace-LocalRun/LocalRun-Plan.md](InspireFace-LocalRun/LocalRun-Plan.md) | 试跑全过程主记录 |

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云侧模型在线与推理探测报告 · RealCue</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --ink: #1f2937;
+    --ink-soft: #4b5563;
+    --line: #e5e7eb;
+    --blue: #1d4ed8;
+    --blue-soft: #eff6ff;
+    --green: #15803d;
+    --green-soft: #ecfdf5;
+    --amber: #b45309;
+    --amber-soft: #fffbeb;
+    --red: #b91c1c;
+    --code: #f3f4f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px;
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+                 "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+    line-height: 1.75; font-size: 15px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  header {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 28px 32px; margin-bottom: 20px;
+    border-top: 4px solid var(--blue);
+  }
+  h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: .3px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0; }
+  .meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    background: var(--blue-soft); color: var(--blue); border: 1px solid #dbeafe;
+    border-radius: 999px; padding: 3px 12px; font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  section {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 24px 32px; margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 19px; margin: 0 0 16px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--line); color: var(--ink);
+  }
+  h2 .num { color: var(--blue); font-variant-numeric: tabular-nums; margin-right: 10px; }
+  h3 { font-size: 15.5px; margin: 20px 0 8px; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0; padding-left: 24px; }
+  li { margin: 6px 0; }
+  code {
+    background: var(--code); border: 1px solid #e8eaed; border-radius: 4px;
+    padding: 1px 5px; font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  pre {
+    background: #1f2430; color: #e6e9ef; border-radius: 8px; padding: 16px 18px;
+    overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 12px 0;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; font-weight: 600; color: var(--ink-soft); }
+  tbody tr:nth-child(even) { background: #fcfcfd; }
+  .yes { color: var(--green); font-weight: 600; }
+  .no { color: var(--red); font-weight: 600; }
+  .warn { color: var(--amber); font-weight: 600; }
+  .callout {
+    border-left: 4px solid var(--green); background: var(--green-soft);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0;
+  }
+  .callout.amber { border-left-color: var(--amber); background: var(--amber-soft); }
+  .callout.blue { border-left-color: var(--blue); background: var(--blue-soft); }
+  .callout p:first-child { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  footer { text-align: center; color: #9ca3af; font-size: 12.5px; padding-top: 12px; }
+  .tag { display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 12px; font-weight: 600; }
+  .tag-ok { background: var(--green-soft); color: var(--green); border: 1px solid #a7f3d0; }
+  .tag-warn { background: var(--amber-soft); color: var(--amber); border: 1px solid #fde68a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>云侧模型在线与推理探测报告</h1>
+  <p class="sub">RealCue · 未来「云端大模型 ↔ 端侧 Android 人脸 ID」交互的最小在线与推理自检</p>
+  <div class="meta">
+    <span class="pill">2026-11-17</span>
+    <span class="pill">192.168.32.6:18090</span>
+    <span class="pill">qwen3-vl-4b-thinking</span>
+    <span class="pill">OpenAI-compatible</span>
+    <span class="pill">cloud-model-probe/</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="num">1.</span>一句话结论</h2>
+  <div class="callout">
+    <p><strong>模型在线、API 正常、实际推理正常。</strong>局域网 <code>ping</code> 4/4 全通，
+    <code>GET /v1/models</code> 返回 200，<code>POST /v1/chat/completions</code> 返回了非空中文回复。</p>
+    <p>唯一的坑：这是一个 <strong>thinking 模型</strong>，按最初建议的 <code>max_tokens=128</code>
+    发「你好」会得到 <code>finish_reason=length</code> + 空 <code>content</code> ——
+    这是思维链占满预算造成的<strong>假阴性</strong>，不是模型离线。把上限提到 512 后
+    <code>finish_reason=stop</code> 且回复正常。</p>
+  </div>
+  <p>本轮把上一轮的手工 <code>curl</code> 经验固化成了可复用脚本
+  <code>cloud-model-probe/probe_model.py</code>，并补齐专用 README 与本报告。
+  <strong>未修改任何 <code>app/src/</code> 业务源码。</strong></p>
+</section>
+
+<section>
+  <h2><span class="num">2.</span>判定口径：ping 不等于推理</h2>
+  <table>
+    <thead><tr><th>步骤</th><th>动作</th><th>能证明</th><th>不能证明</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>ping -n 4 192.168.32.6</code></td><td class="yes">ICMP 局域网连通</td><td>端口开放、模型加载、生成能力</td></tr>
+      <tr><td>2</td><td><code>GET /v1/models</code></td><td class="yes">OpenAI-compatible API 在线、模型已注册</td><td>实际能否生成内容</td></tr>
+      <tr><td>3</td><td><code>POST /v1/chat/completions</code></td><td class="yes"><strong>实际推理正常</strong>（非空 <code>content</code>）</td><td>并发、长稳、精度</td></tr>
+    </tbody>
+  </table>
+  <p>模型名不写死：先取 <code>data[0].id</code>，再用于对话请求。这一点对端侧接入很重要 ——
+  服务端换模型时 APK 不需要改。</p>
+</section>
+
+<section>
+  <h2><span class="num">3.</span>目标环境与实测时间</h2>
+  <table>
+    <thead><tr><th>项</th><th>值</th></tr></thead>
+    <tbody>
+      <tr><td>服务地址</td><td><code>http://192.168.32.6:18090</code>（局域网直连，绕过系统代理）</td></tr>
+      <tr><td>接口</td><td><code>/v1/models</code>、<code>/v1/chat/completions</code></td></tr>
+      <tr><td>模型</td><td><code>qwen3-vl-4b-thinking</code>（由 <code>data[0].id</code> 自动取得）</td></tr>
+      <tr><td>请求</td><td><code>{"messages":[{"role":"user","content":"你好"}],"stream":false}</code></td></tr>
+      <tr><td>首轮手工 curl</td><td>2026-11-17 16:07（128 → 512 两次）</td></tr>
+      <tr><td>脚本正式跑</td><td>2026-11-17 16:29（三段落盘 + 边界自测）</td></tr>
+      <tr><td>本机环境</td><td>Windows / Git Bash；Python 3.13；仅标准库</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2><span class="num">4.</span>三段式实测结果</h2>
+  <table>
+    <thead><tr><th>步骤</th><th>结果</th><th>关键数据（脚本正式跑 16:29:32）</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1 · ping</td><td class="yes">OK</td>
+        <td>4 次全通，丢包 <code>0.0%</code>，平均 <code>13.0ms</code>；Windows 用 <code>-n</code>（<code>-c</code> 需管理员权限）</td>
+      </tr>
+      <tr>
+        <td>2 · models</td><td class="yes">HTTP 200</td>
+        <td><code>0.051s</code>；<code>data[0].id = qwen3-vl-4b-thinking</code></td>
+      </tr>
+      <tr>
+        <td>3 · chat 首次</td><td class="warn">HTTP 200，但空回复</td>
+        <td><code>2.295s</code> / <code>1343 B</code>；<code>max_tokens=128</code>；<code>finish_reason=length</code>；<code>content</code> 空；<code>reasoning_len=233</code>；<code>completion_tokens=128</code></td>
+      </tr>
+      <tr>
+        <td>3 · chat 复测</td><td class="yes">HTTP 200，推理成功</td>
+        <td><code>4.939s</code> / <code>1850 B</code>；<code>max_tokens=512</code>；<code>finish_reason=stop</code>；非空中文回复；<code>completion_tokens=268</code>；约 <code>57.3 tok/s</code></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout blue">
+    <p><strong>VERDICT: PASS_WITH_RETRY（退出码 0）</strong> —— 网络连通、模型 API、实际推理均正常。</p>
+  </div>
+  <p>首轮手工 curl 也得到同形态结果：128 时 <code>2.525s</code> / <code>1294 B</code> /
+  <code>length</code> / 空 <code>content</code>；512 时 <code>4.828s</code> / <code>1820 B</code> /
+  <code>stop</code> / 非空中文问候。两次独立验证互相印证。</p>
+</section>
+
+<section>
+  <h2><span class="num">5.</span>thinking 模型的假阴性机制</h2>
+  <p><code>qwen3-vl-4b-thinking</code> 会先输出 <code>reasoning_content</code>（思维链），
+  再输出 <code>message.content</code>。<code>max_tokens</code> 同时约束两者，所以预算太小就会出现
+  「HTTP 200、但什么也没答」：</p>
+  <table>
+    <thead><tr><th>指标</th><th><code>max_tokens=128</code></th><th><code>max_tokens=512</code></th></tr></thead>
+    <tbody>
+      <tr><td><code>finish_reason</code></td><td class="no"><code>length</code>（被截断）</td><td class="yes"><code>stop</code>（正常结束）</td></tr>
+      <tr><td><code>message.content</code></td><td class="no">空字符串</td><td class="yes">非空中文问候</td></tr>
+      <tr><td><code>reasoning_content</code></td><td>有，且占满预算</td><td>有，但未耗尽预算</td></tr>
+      <tr><td><code>completion_tokens</code></td><td><code>128</code>（等于上限）</td><td><code>268</code>（小于上限）</td></tr>
+      <tr><td>若据此判定</td><td class="no">误判「模型不工作」</td><td class="yes">正确判定「推理正常」</td></tr>
+    </tbody>
+  </table>
+  <div class="callout amber">
+    <p><strong>结论：</strong>不要用「HTTP 200 + 空 content」判定模型离线。
+    判据必须是 <code>choices[0].message.content</code> 非空；同时要检查
+    <code>finish_reason=length</code> 与 <code>reasoning_content</code>，把 thinking 截断和真故障区分开。</p>
+  </div>
+  <p>脚本的默认行为刻意保留了原始口径：先按 128 发一次（如实记录假阴性），
+  识别到 <code>finish_reason == "length" &amp;&amp; content 为空 &amp;&amp; reasoning_content 非空</code>
+  后自动用 512 复测，<strong>两次结果都落盘</strong>，不掩盖第一次。</p>
+</section>
+
+<section>
+  <h2><span class="num">6.</span>工具化：probe_model.py</h2>
+  <ul>
+    <li><strong>零依赖</strong>：仅 Python 标准库（<code>urllib</code>），不需要 curl / jq / requests。</li>
+    <li><strong>可移植</strong>：路径由脚本自身位置推导，无本机绝对路径；主机/端口/模型/提示词/token 全部可配置（CLI 或 <code>REALCUE_MODEL_*</code> 环境变量）。</li>
+    <li><strong>跨平台 ping</strong>：Windows 自动用 <code>-n</code>，Unix 用 <code>-c</code>；控制台输出按 ANSI 代码页解码，中文统计行不再乱码。</li>
+    <li><strong>默认绕过代理</strong>：等价于 <code>curl --noproxy '*'</code>；<code>--use-proxy</code> 可关闭。</li>
+    <li><strong>结构化落盘</strong>：汇总 JSON + 原始响应 JSON + meta.txt，便于复核与 diff。</li>
+    <li><strong>明确退出码</strong>：<code>0</code> 通过 / <code>1</code> 失败 / <code>2</code> 结论不确定。</li>
+  </ul>
+  <h3>自测矩阵（2026-11-17 实测）</h3>
+  <table>
+    <thead><tr><th>场景</th><th>命令</th><th>verdict</th><th>退出码</th></tr></thead>
+    <tbody>
+      <tr><td>默认 128 → 512 自动复测</td><td><code>python probe_model.py</code></td><td class="yes">PASS_WITH_RETRY</td><td><code>0</code></td></tr>
+      <tr><td>关闭复测，复现假阴性</td><td><code>python probe_model.py --no-retry</code></td><td class="warn">INCONCLUSIVE_THINKING_TRUNCATED</td><td><code>2</code></td></tr>
+      <tr><td>直接给足 token</td><td><code>python probe_model.py --max-tokens 512</code></td><td class="yes">PASS（不触发复测）</td><td><code>0</code></td></tr>
+    </tbody>
+  </table>
+  <p>边界自测产物写入 <code>InspireFace-LocalRun/runtime/tmp/</code>（已被 <code>.gitignore</code> 排除），不进入仓库。</p>
+</section>
+
+<section>
+  <h2><span class="num">7.</span>证据链</h2>
+  <p>目录：<code>cloud-model-probe/</code>。共 9 个结果文件，分两组：</p>
+  <table>
+    <thead><tr><th>文件</th><th>来源</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>results/chat-nihao-20261117-160705.json</code> + <code>.meta.txt</code></td><td>首轮手工 curl</td><td>128 token，<code>length</code> / 空 content</td></tr>
+      <tr><td><code>results/chat-nihao-mt512-20261117-160739.json</code> + <code>.meta.txt</code></td><td>首轮手工 curl</td><td>512 token，<code>stop</code> / 非空回复</td></tr>
+      <tr><td><code>results/probe-20261117-162932.json</code></td><td>脚本正式跑</td><td>完整汇总：三段结果、诊断、verdict、结论、产出清单</td></tr>
+      <tr><td><code>results/chat-nihao-20261117-162932.json</code> + <code>.meta.txt</code></td><td>脚本正式跑</td><td>首次 128 原始响应</td></tr>
+      <tr><td><code>results/chat-nihao-mt512-20261117-162932.json</code> + <code>.meta.txt</code></td><td>脚本正式跑</td><td>复测 512 原始响应</td></tr>
+      <tr><td><code>probe_model.py</code></td><td>本轮新增</td><td>可复用探针</td></tr>
+      <tr><td><code>README.md</code></td><td>本轮新增</td><td>专用使用文档</td></tr>
+    </tbody>
+  </table>
+  <p>中间调试态（脚本首跑、ping 解码修复前的 162455 一批 5 个文件）已在确认清单后清理，
+  不进入仓库，避免与正式产物混淆。</p>
+</section>
+
+<section>
+  <h2><span class="num">8.</span>未来端云交互的接口约定</h2>
+  <ol>
+    <li><strong>服务形态</strong>：OpenAI-compatible，<code>GET /v1/models</code> + <code>POST /v1/chat/completions</code>。</li>
+    <li><strong>模型发现</strong>：启动时取 <code>data[0].id</code>，不要把模型名写死在 APK 里。</li>
+    <li><strong>非流式</strong>：<code>stream: false</code>；本探针只解析非流式响应，流式需另做解析。</li>
+    <li><strong>token 预算</strong>：<code>max_tokens</code> 可配置且默认给足（≥512）；必须处理 <code>reasoning_content</code> 与 <code>finish_reason=length</code>。</li>
+    <li><strong>成功判据</strong>：以 <code>choices[0].message.content</code> 非空为准，HTTP 200 不等于推理成功。</li>
+    <li><strong>网络</strong>：局域网直连、绕过系统代理；设超时；失败要能区分「连通性 / API / 推理」三段。</li>
+    <li><strong>地址配置</strong>：走配置或环境变量，不硬编码；桥接前先跑一次本探针做自检。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">9.</span>诚实边界与复现</h2>
+  <ul>
+    <li>只证明「单次请求能拿到非空回复」，<strong>不测</strong>并发、长时稳定性、吞吐、模型精度或多轮上下文。</li>
+    <li><code>ping</code> 失败不必然代表服务不可用（ICMP 可能被防火墙禁用），脚本不会因 ping 失败中断后续 HTTP 检查。</li>
+    <li>目前只验证了 <code>192.168.32.6:18090</code> 这一台局域网服务；换地址用 <code>--base-url</code> 或环境变量。</li>
+    <li>本目录不包含、也不修改 <code>app/src/</code> 下的 Android 业务源码；<strong>端侧接入尚未实现</strong>，这里是前置自检。</li>
+  </ul>
+  <h3>复现命令</h3>
+  <pre><code>cd cloud-model-probe
+python probe_model.py                       # 默认 128 → 512 自动复测
+python probe_model.py --max-tokens 512      # 直接给足 token
+python probe_model.py --no-retry            # 复现假阴性，退出码 2
+python probe_model.py --base-url http://&lt;host&gt;:&lt;port&gt;   # 换服务</code></pre>
+  <div class="callout blue">
+    <p>详细参数、环境变量、等价 curl 命令与接口约定见
+    <code>cloud-model-probe/README.md</code>；主仓库入口见 <code>README.md</code>。</p>
+  </div>
+</section>
+
+<footer>RealCue · cloud-model-probe · 生成于 2026-11-17 · 证据文件均可在本仓库复核</footer>
+
+</div>
+</body>
+</html>
