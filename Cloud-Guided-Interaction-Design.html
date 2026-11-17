@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云端大模型指导手机端交互 · 可行性与架构设计 · RealCue</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --ink: #1f2937; --ink-soft: #4b5563;
+    --line: #e5e7eb; --blue: #1d4ed8; --blue-soft: #eff6ff;
+    --green: #15803d; --green-soft: #ecfdf5; --amber: #b45309;
+    --amber-soft: #fffbeb; --red: #b91c1c; --red-soft: #fef2f2;
+    --code: #f3f4f6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+                 "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+    line-height: 1.75; font-size: 15px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  header { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 28px 32px; margin-bottom: 20px; border-top: 4px solid var(--blue); }
+  h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: .3px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin: 0; }
+  .meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { background: var(--blue-soft); color: var(--blue); border: 1px solid #dbeafe;
+    border-radius: 999px; padding: 3px 12px; font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 24px 32px; margin-bottom: 18px; }
+  h2 { font-size: 19px; margin: 0 0 16px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--line); color: var(--ink); }
+  h2 .num { color: var(--blue); font-variant-numeric: tabular-nums; margin-right: 10px; }
+  h3 { font-size: 15.5px; margin: 20px 0 8px; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0; padding-left: 24px; }
+  li { margin: 6px 0; }
+  code { background: var(--code); border: 1px solid #e8eaed; border-radius: 4px;
+    padding: 1px 5px; font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  pre { background: #1f2430; color: #e6e9ef; border-radius: 8px; padding: 16px 18px;
+    overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 12px 0;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; font-weight: 600; color: var(--ink-soft); }
+  tbody tr:nth-child(even) { background: #fcfcfd; }
+  .yes { color: var(--green); font-weight: 600; }
+  .no { color: var(--red); font-weight: 600; }
+  .warn { color: var(--amber); font-weight: 600; }
+  .callout { border-left: 4px solid var(--blue); background: var(--blue-soft);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+  .callout.warn { border-left-color: var(--amber); background: var(--amber-soft); }
+  .callout.no { border-left-color: var(--red); background: var(--red-soft); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; background: #fcfcfd; }
+  .card h3 { margin-top: 0; }
+  .tag { display: inline-block; font-size: 12px; border-radius: 5px; padding: 1px 8px;
+    background: var(--blue-soft); color: var(--blue); margin-right: 6px; }
+  .tag.p2 { background: #f5f3ff; color: #6d28d9; }
+  .tag.p3 { background: #f0fdfa; color: #0f766e; }
+  svg { width: 100%; height: auto; display: block; margin: 10px 0; }
+  footer { color: var(--ink-soft); font-size: 13px; text-align: center; margin-top: 24px; }
+  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>云端大模型指导手机端交互 · 可行性与架构设计</h1>
+  <p class="sub">RealCue · 只做调研，不改业务代码 · 基于云侧能力实测与端侧资产盘点</p>
+  <div class="meta">
+    <span class="pill">2026-11-17</span>
+    <span class="pill">probe bd5c8ad</span>
+    <span class="pill">云模型 qwen3-vl-4b-thinking</span>
+    <span class="pill">audio NOT supported</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="num">01</span>一句话结论</h2>
+  <div class="callout">
+    <strong>可行，但分工必须重划。</strong>云端模型实测<strong>不接受音频输入</strong>（<code>input_modalities = text / image / video</code>，<code>/v1/audio/transcriptions → 501</code>），
+    所以「声音同步抽取」必须在手机端完成：录音 → VAD → 语音转文字 → 说话人归属 → 与 <code>P001</code> 对齐，
+    <strong>只把结构化文字事件发给云端</strong>做理解与指导。
+  </div>
+  <p>换句话说：<strong>端侧负责「看见谁、听见谁说了什么」，云端负责「接下来该怎么办」</strong>。</p>
+</section>
+
+<section>
+  <h2><span class="num">02</span>现状：手里已有什么、缺什么</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 class="yes">✓ 已具备（可复用）</h3>
+      <ul>
+        <li>多人脸检测 / 跟踪 / 106 点关键点</li>
+        <li>512 维特征 + FeatureHub 持久化人物库</li>
+        <li>长期编号 <code>P001/P002</code>，离场重入仍命中</li>
+        <li>图片 / 视频页面都已统一长期编号</li>
+        <li>单线程 Session 约束已明确</li>
+        <li>OkHttp + <code>INTERNET</code>，PLUS 云端上传范式已跑通</li>
+        <li>云端推理与接口约定文档已具备</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="no">✗ 完全缺失（从零加）</h3>
+      <ul>
+        <li><code>RECORD_AUDIO</code> 权限</li>
+        <li>一切音频代码：录音 / VAD / ASR / 声纹 / TTS</li>
+        <li>「某时刻谁在场」可回放时间线</li>
+        <li>端侧调用大模型的代码</li>
+        <li><code>S0xx ⇄ P0xx</code> 说话人-人物绑定</li>
+        <li>摄像头与音频时间戳对齐验证</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>云侧实测：决定架构的硬约束</h2>
+  <h3>模型元数据（<code>GET /v1/models</code>）</h3>
+  <pre><code>"architecture": {
+  "input_modalities":  ["text", "image", "video"],   ← 没有 audio
+  "output_modalities": ["text"]
+},
+"capabilities": ["completion", "multimodal"],
+"meta": { "parameter_size": "4B", "n_ctx": 32768,
+          "quantization_level": "Q8_0", "size": 4274448384 }</code></pre>
+  <div class="callout no">
+    <strong>因此：</strong>可以发文字、可以发画面（image/video），<strong>不能发录音</strong>；
+    <code>/v1/embeddings</code> 也是 501，连让云端算声纹向量都不行。
+  </div>
+
+  <h3>端点矩阵（本轮实测）</h3>
+  <table>
+    <thead><tr><th>端点</th><th>GET</th><th>POST 空 JSON</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td><code>/v1/chat/completions</code></td><td>—</td><td class="yes">400</td><td>存在，唯一可用推理入口</td></tr>
+      <tr><td><code>/v1/audio/transcriptions</code></td><td>404</td><td class="no">501</td><td><strong>未实现</strong>，云端不能转写</td></tr>
+      <tr><td><code>/v1/embeddings</code></td><td>404</td><td class="no">501</td><td>未实现</td></tr>
+      <tr><td><code>/v1/models/&lt;id&gt;</code></td><td>404</td><td>—</td><td>用列表端点取 <code>data[0].id</code></td></tr>
+      <tr><td><code>/v1/files</code>、<code>/v1/completions</code></td><td>404</td><td>—</td><td>未实现</td></tr>
+    </tbody>
+  </table>
+
+  <h3>延迟实测（同一局域网）</h3>
+  <table>
+    <thead><tr><th>阶段</th><th>实测</th><th>设计含义</th></tr></thead>
+    <tbody>
+      <tr><td>ICMP ping</td><td>4/4 通，0% 丢包，平均 14 ms</td><td>网络没问题</td></tr>
+      <tr><td><code>GET /v1/models</code></td><td>200，约 58 ms</td><td>元数据可启动时取一次</td></tr>
+      <tr><td>chat <code>max_tokens=128</code></td><td>约 2.3 s，<code>length</code>，空 content</td><td>thinking 假阴性</td></tr>
+      <tr><td>chat <code>max_tokens=512</code></td><td>约 4.2 s，<code>stop</code>，非空中文</td><td><strong>必须用 512</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="warn">单次往返是<strong>秒级</strong>：架构必须是事件驱动、低频请求（一句话问一次），不能逐帧请求；「指导」是对话级策略，不是硬实时控制。</p>
+</section>
+
+<section>
+  <h2><span class="num">04</span>推荐架构：端侧感知 + 端侧关联 + 云端决策</h2>
+  <svg viewBox="0 0 900 470" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="20" width="640" height="430" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="42" y="48" font-size="16" font-weight="700" fill="#1e3a8a">手机端（本地，离线可跑）</text>
+
+    <!-- L0 -->
+    <rect x="45" y="65" width="590" height="120" rx="10" fill="#ffffff" stroke="#bfdbfe"/>
+    <text x="60" y="90" font-size="13" font-weight="700" fill="#1d4ed8">L0 感知层</text>
+    <rect x="60" y="102" width="255" height="66" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="72" y="124" font-size="12.5" font-weight="600" fill="#1f2937">CameraX 人脸检测 / 跟踪</text>
+    <text x="72" y="145" font-size="11.5" fill="#4b5563">FaceTrackingAnalyzer → FeatureHub</text>
+    <text x="72" y="161" font-size="11.5" fill="#4b5563">→ P001 / P002（timestampNs）</text>
+    <rect x="355" y="102" width="265" height="66" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="367" y="124" font-size="12.5" font-weight="600" fill="#1f2937">AudioRecord 16 kHz mono</text>
+    <text x="367" y="145" font-size="11.5" fill="#4b5563">→ Silero VAD（0.6 MB）</text>
+    <text x="367" y="161" font-size="11.5" fill="#4b5563">→ 语音段 [t0, t1]（音频时钟）</text>
+
+    <!-- L1 -->
+    <rect x="45" y="200" width="590" height="105" rx="10" fill="#ffffff" stroke="#bfdbfe"/>
+    <text x="60" y="225" font-size="13" font-weight="700" fill="#1d4ed8">L1 关联层（TimeAligner：统一单调时钟）</text>
+    <rect x="60" y="237" width="180" height="52" rx="8" fill="#f0fdf4" stroke="#86efac"/>
+    <text x="70" y="258" font-size="11.5" font-weight="600" fill="#15803d">单人画面</text>
+    <text x="70" y="276" font-size="11" fill="#4b5563">语音直接归属 P0xx</text>
+    <rect x="252" y="237" width="180" height="52" rx="8" fill="#f0fdf4" stroke="#86efac"/>
+    <text x="262" y="258" font-size="11.5" font-weight="600" fill="#15803d">多人画面</text>
+    <text x="262" y="276" font-size="11" fill="#4b5563">CAM++ 声纹 + 聚类 S0xx</text>
+    <rect x="444" y="237" width="176" height="52" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+    <text x="454" y="258" font-size="11.5" font-weight="600" fill="#b45309">FaceVoiceBinder</text>
+    <text x="454" y="276" font-size="11" fill="#4b5563">S ⇄ P 绑定（带置信度）</text>
+
+    <!-- utterance -->
+    <rect x="45" y="320" width="590" height="48" rx="8" fill="#eef2ff" stroke="#a5b4fc"/>
+    <text x="60" y="342" font-size="12" font-weight="600" fill="#3730a3">Utterance 事件</text>
+    <text x="60" y="359" font-size="11" fill="#4b5563">{ person_id, start_ms, end_ms, text, asr_conf, spk_conf }</text>
+
+    <!-- L2 -->
+    <rect x="45" y="382" width="590" height="52" rx="10" fill="#ffffff" stroke="#bfdbfe"/>
+    <text x="60" y="404" font-size="12.5" font-weight="700" fill="#1d4ed8">L2 交互层 · InteractionClient（OkHttp，复用 PLUS 范式）</text>
+    <text x="60" y="423" font-size="11.2" fill="#4b5563">组包 → POST /v1/chat/completions（max_tokens=512, stream=false）→ 白名单动作：SPEAK / ASK / NOOP</text>
+
+    <!-- arrow -->
+    <path d="M660 300 L710 300" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arr)"/>
+    <text x="663" y="288" font-size="10.5" fill="#1d4ed8">只传文字事件</text>
+    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#1d4ed8"/></marker></defs>
+
+    <!-- cloud -->
+    <rect x="712" y="240" width="168" height="120" rx="12" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2"/>
+    <text x="728" y="270" font-size="13" font-weight="700" fill="#1e3a8a">云端模型</text>
+    <text x="728" y="292" font-size="11.5" fill="#4b5563">qwen3-vl-4b-thinking</text>
+    <text x="728" y="310" font-size="11" fill="#4b5563">理解上下文</text>
+    <text x="728" y="328" font-size="11" fill="#4b5563">给指导策略</text>
+    <text x="728" y="350" font-size="10.5" fill="#b91c1c">✗ 不收音频</text>
+  </svg>
+  <div class="callout warn">
+    <strong>三条原则：</strong>① 端侧识别与关联、云端理解与决策，人脸特征 / 声纹 / 原始音频都不出端；
+    ② VAD 检测到一句话结束才请求一次，同一句话去重；③ 时间戳统一到单调时钟，但<strong>先实测再信任</strong>（见 §05）。
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>关键技术选型与时间同步风险</h2>
+  <h3>端侧 ASR 候选</h3>
+  <table>
+    <thead><tr><th>模型</th><th>体积</th><th>特点</th><th>建议</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SenseVoice Small int8</strong></td><td>160–239 MB</td><td>中英日韩粤、带标点 ITN，约 110 ms / 5 s</td><td class="yes">推荐起步</td></tr>
+      <tr><td>Whisper tiny.int8</td><td>约 40 MB</td><td>仅英文，最省空间</td><td>英文备选</td></tr>
+      <tr><td>Paraformer-zh int8</td><td>约 30–60 MB</td><td>仅中文</td><td>极简备选</td></tr>
+      <tr><td>FunASR Nano / Qwen3-ASR</td><td>690 MB / 806 MB+</td><td>精度更高</td><td class="no">体积过大</td></tr>
+      <tr><td>Silero VAD + sherpa-onnx 运行库</td><td>0.6 MB + 约 29 MB</td><td>arm64 现成</td><td class="yes">随 APK / 动态下载</td></tr>
+    </tbody>
+  </table>
+  <p><strong>工程约定</strong>：模型不进 APK，首次动态下载到应用私有目录并做 SHA-256 校验；否则 APK 从 116 MB 涨到 300 MB+，也突破 GitHub 单文件 100 MB 限制。</p>
+
+  <h3>说话人归属：分两级</h3>
+  <ul>
+    <li><strong>A 级（MVP）</strong>：画面只有一个人 → 语音直接归属该 <code>P0xx</code>，零额外模型、最可靠。</li>
+    <li><strong>B 级（P2）</strong>：pyannote 切分 + CAM++（27 MB / 192 维）或 ERes2Net（111 MB）提声纹 + 聚类成 <code>S0xx</code>，建立 <code>S ⇄ P</code> 绑定。</li>
+    <li><strong>C 级（P3）</strong>：唇动 / 朝向 / 空间位置辅助，处理同时说话；工程量最大，不建议起步就做。</li>
+  </ul>
+  <p class="warn">多人场景允许输出 <code>speaker: "UNKNOWN"</code>，<strong>绝不强行绑定</strong>——错误绑定比不绑定更糟。</p>
+
+  <h3 class="warn">时间同步：最大工程风险（前置验证 V1）</h3>
+  <p>CameraX 的 <code>ImageInfo.getTimestamp()</code> 是纳秒单调，但官方只保证<strong>同一相机实例</strong>内可比。它能否与 <code>SystemClock.elapsedRealtimeNanos()</code>（音频时钟）对齐，取决于 <code>SENSOR_INFO_TIMESTAMP_SOURCE</code>：</p>
+  <ul>
+    <li><code>REALTIME</code>：与 elapsedRealtimeNanos 同域，可比较，目标归属窗口 ±100 ms；</li>
+    <li><code>UNKNOWN</code>：起点未知，<strong>不可</strong>与音频时钟比较 → 退化为「回调到达时间 + 实测偏移」并标注误差，或改用 Camera2；唇级同步（±20 ms）暂不承诺。</li>
+  </ul>
+  <p>必须在目标真机（小米 14 Pro）上同时记录 camera timestamp / 音频 timestamp / 回调到达时间，跑 1 分钟统计偏差后再定方案。</p>
+</section>
+
+<section>
+  <h2><span class="num">06</span>端 → 云事件协议（建议 schema）</h2>
+  <pre><code>{
+  "schema": "realcue.interaction.v1",
+  "session_id": "8f3a...",
+  "clock": { "domain": "elapsedRealtimeNanos", "verified": true, "offset_ms": 0 },
+  "window": { "start_ms": 10240, "end_ms": 13860 },
+  "persons": [
+    { "person_id": "P001", "present_ms": [10240, 13860], "conf": 0.97 }
+  ],
+  "utterances": [
+    { "speaker": "P001", "start_ms": 10510, "end_ms": 11220,
+      "text": "你好，你是谁？", "asr_conf": 0.86, "spk_conf": 0.71 }
+  ],
+  "request": "根据在场的人和对话内容，给出下一步交互建议。"
+}</code></pre>
+  <p><strong>不出端的数据</strong>：原始 PCM、人脸 512 维特征、声纹 embedding、人脸图片（v1 不传；P3 若要让 VL 模型看图需单独授权传压缩 crop）。</p>
+  <p><strong>云 → 端</strong>：用 system prompt 约束返回结构化 JSON，端侧只接受白名单动作 <code>SPEAK</code> / <code>ASK</code> / <code>NOOP</code>；其他一律拒绝，不允许云端直接控制相机或人物库。</p>
+</section>
+
+<section>
+  <h2><span class="num">07</span>分阶段路线</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="tag">P0</span>前置验证</h3>
+      <p>只验证假设，不做产品功能：① 真机时间戳源与偏差；② 云端结构化 JSON 连跑 20 次解析成功率；③ SenseVoice 加载时间 / 内存峰值 / 推理耗时。</p>
+      <p class="yes"><strong>验收</strong>：三项都有实测数字；V1 不过就降级为单人宽松时间窗。</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag">P1</span>MVP：单人 1:1</h3>
+      <p>加 <code>RECORD_AUDIO</code> + 前台采集 + VAD + SenseVoice；只做 A 级归属；打通「一句话 → 云端 → 文本/TTS 指导」闭环。</p>
+      <p class="yes"><strong>验收</strong>：A 说话，云端回复带对 <code>P001</code>；静音不请求；端到端延迟有实测值。</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag p2">P2</span>多人说话人区分</h3>
+      <p>加 CAM++ 声纹 + 聚类，建立 <code>S0xx ⇄ P0xx</code>；处理交替说话与同时说话（UNKNOWN）。</p>
+      <p class="yes"><strong>验收</strong>：A/B 交替归属正确率有统计，同时说话不串号。</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag p3">P3</span>增强</h3>
+      <p>唇动 / 朝向辅助归属；授权后上传压缩人脸 crop 让 VL 模型看着人给指导；流式 ASR 降延迟。</p>
+      <p class="yes"><strong>验收</strong>：按具体指标另定。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">08</span>风险与需要你拍板的事</h2>
+  <h3>主要风险</h3>
+  <table>
+    <thead><tr><th>风险</th><th>应对</th></tr></thead>
+    <tbody>
+      <tr><td>云端不支持音频（已实测）</td><td>必须端侧 ASR；换服务端才可能改变</td></tr>
+      <tr><td>秒级延迟</td><td>事件驱动、低频请求；不承诺硬实时</td></tr>
+      <tr><td>时间戳源 UNKNOWN</td><td>P0 先实测，不通过就降级，不做假精度</td></tr>
+      <tr><td>模型体积 160–239 MB</td><td>动态下载 + SHA-256，不进 APK / Git</td></tr>
+      <tr><td>端侧算力叠加</td><td>CameraX + InspireFace + ASR + VAD 同时跑，需实测帧率 / 发热 / 内存</td></tr>
+      <tr><td>隐私与错误绑定</td><td>v1 只出文字事件；允许 UNKNOWN，不强行绑脸</td></tr>
+    </tbody>
+  </table>
+  <h3>需要你确认的 4 件事</h3>
+  <ol>
+    <li>「声音同步抽取」是否就是「录音 → 转文字 → 判断谁说的 → 与 P0xx 对齐」？</li>
+    <li>是否要求云端<strong>听原始声音</strong>或<strong>看人脸画面</strong>？（当前只能看画面，不能听；传图需额外授权）</li>
+    <li>云端指导要不要 <strong>TTS 播报</strong>，还是只显示在界面上？</li>
+    <li>长期遗留：新人拿 <code>P003</code> 还是复用空出来的 <code>P002</code>？</li>
+  </ol>
+</section>
+
+<footer>
+  本报告只覆盖可核实的事实与基于实测的设计推演；端侧业务代码未改动。详见 Research-CloudGuided-Interaction.md
+</footer>
+
+</div>
+</body>
+</html>
