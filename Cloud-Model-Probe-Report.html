@@ -82,9 +82,6 @@
   .callout p:first-child { margin-top: 0; }
   .callout p:last-child { margin-bottom: 0; }
   footer { text-align: center; color: #9ca3af; font-size: 12.5px; padding-top: 12px; }
-  .tag { display: inline-block; border-radius: 4px; padding: 1px 7px; font-size: 12px; font-weight: 600; }
-  .tag-ok { background: var(--green-soft); color: var(--green); border: 1px solid #a7f3d0; }
-  .tag-warn { background: var(--amber-soft); color: var(--amber); border: 1px solid #fde68a; }
 </style>
 </head>
 <body>
@@ -95,10 +92,10 @@
   <p class="sub">RealCue · 未来「云端大模型 ↔ 端侧 Android 人脸 ID」交互的最小在线与推理自检</p>
   <div class="meta">
     <span class="pill">2026-11-17</span>
-    <span class="pill">192.168.32.6:18090</span>
+    <span class="pill">http://192.168.32.6:18090/v1</span>
     <span class="pill">qwen3-vl-4b-thinking</span>
     <span class="pill">OpenAI-compatible</span>
-    <span class="pill">cloud-model-probe/</span>
+    <span class="pill">probe v1.1</span>
   </div>
 </header>
 
@@ -112,8 +109,9 @@
     这是思维链占满预算造成的<strong>假阴性</strong>，不是模型离线。把上限提到 512 后
     <code>finish_reason=stop</code> 且回复正常。</p>
   </div>
-  <p>本轮把上一轮的手工 <code>curl</code> 经验固化成了可复用脚本
-  <code>cloud-model-probe/probe_model.py</code>，并补齐专用 README 与本报告。
+  <p>本轮（脚本 v1.1）还把<strong>服务地址口径</strong>统一到
+  <code>http://192.168.32.6:18090/v1</code>，并让脚本对「带 <code>/v1</code>」与
+  「只给 origin」两种写法都兼容，避免拼出 <code>/v1/v1/models</code>。
   <strong>未修改任何 <code>app/src/</code> 业务源码。</strong></p>
 </section>
 
@@ -132,41 +130,53 @@
 </section>
 
 <section>
-  <h2><span class="num">3.</span>目标环境与实测时间</h2>
+  <h2><span class="num">3.</span>服务地址口径与目标环境</h2>
+  <div class="callout blue">
+    <p><strong>规范服务地址（与云侧文档一致）：<code>http://192.168.32.6:18090/v1</code></strong>。
+    这里的 <code>/v1</code> 是 API base 的一部分，端点为 <code>/models</code> 与
+    <code>/chat/completions</code>，因此完整请求 URL 仍带 <code>/v1</code>。</p>
+  </div>
   <table>
     <thead><tr><th>项</th><th>值</th></tr></thead>
     <tbody>
-      <tr><td>服务地址</td><td><code>http://192.168.32.6:18090</code>（局域网直连，绕过系统代理）</td></tr>
-      <tr><td>接口</td><td><code>/v1/models</code>、<code>/v1/chat/completions</code></td></tr>
+      <tr><td>服务地址 / API base</td><td><code>http://192.168.32.6:18090/v1</code>（局域网直连，绕过系统代理）</td></tr>
+      <tr><td>模型列表</td><td><code>GET /models</code> → <code>http://192.168.32.6:18090/v1/models</code></td></tr>
+      <tr><td>对话</td><td><code>POST /chat/completions</code> → <code>http://192.168.32.6:18090/v1/chat/completions</code></td></tr>
+      <tr><td>兼容写法</td><td>只给 origin <code>http://192.168.32.6:18090</code> 时脚本自动补 <code>/v1</code>，两种写法端点完全一致</td></tr>
       <tr><td>模型</td><td><code>qwen3-vl-4b-thinking</code>（由 <code>data[0].id</code> 自动取得）</td></tr>
       <tr><td>请求</td><td><code>{"messages":[{"role":"user","content":"你好"}],"stream":false}</code></td></tr>
       <tr><td>首轮手工 curl</td><td>2026-11-17 16:07（128 → 512 两次）</td></tr>
-      <tr><td>脚本正式跑</td><td>2026-11-17 16:29（三段落盘 + 边界自测）</td></tr>
+      <tr><td>脚本 v1.0 正式跑</td><td>2026-11-17 16:29（origin 口径，历史证据保留）</td></tr>
+      <tr><td>脚本 v1.1 对齐后正式跑</td><td>2026-11-17 16:55（<code>.../v1</code> 口径 + 三种地址写法验证）</td></tr>
       <tr><td>本机环境</td><td>Windows / Git Bash；Python 3.13；仅标准库</td></tr>
     </tbody>
   </table>
+  <p>脚本内部用 <code>normalize_api_base()</code> 把输入归一成
+  <code>(api_base, api_prefix)</code>：地址已带 <code>/v1</code> 则前缀为空，只给 origin
+  则前缀补 <code>/v1</code>。汇总 JSON 的 <code>target.base_url</code> 与
+  <code>target.endpoints</code> 会记录实际地址，便于复核。</p>
 </section>
 
 <section>
   <h2><span class="num">4.</span>三段式实测结果</h2>
   <table>
-    <thead><tr><th>步骤</th><th>结果</th><th>关键数据（脚本正式跑 16:29:32）</th></tr></thead>
+    <thead><tr><th>步骤</th><th>结果</th><th>关键数据（v1.1 正式跑 16:55:28）</th></tr></thead>
     <tbody>
       <tr>
         <td>1 · ping</td><td class="yes">OK</td>
-        <td>4 次全通，丢包 <code>0.0%</code>，平均 <code>13.0ms</code>；Windows 用 <code>-n</code>（<code>-c</code> 需管理员权限）</td>
+        <td>4 次全通，丢包 <code>0.0%</code>，平均 <code>11.0ms</code>；Windows 用 <code>-n</code>（<code>-c</code> 需管理员权限）</td>
       </tr>
       <tr>
         <td>2 · models</td><td class="yes">HTTP 200</td>
-        <td><code>0.051s</code>；<code>data[0].id = qwen3-vl-4b-thinking</code></td>
+        <td><code>0.025s</code>；<code>data[0].id = qwen3-vl-4b-thinking</code></td>
       </tr>
       <tr>
         <td>3 · chat 首次</td><td class="warn">HTTP 200，但空回复</td>
-        <td><code>2.295s</code> / <code>1343 B</code>；<code>max_tokens=128</code>；<code>finish_reason=length</code>；<code>content</code> 空；<code>reasoning_len=233</code>；<code>completion_tokens=128</code></td>
+        <td><code>2.271s</code> / <code>1296 B</code>；<code>max_tokens=128</code>；<code>finish_reason=length</code>；<code>content</code> 空；<code>reasoning_len=216</code>；<code>completion_tokens=128</code></td>
       </tr>
       <tr>
         <td>3 · chat 复测</td><td class="yes">HTTP 200，推理成功</td>
-        <td><code>4.939s</code> / <code>1850 B</code>；<code>max_tokens=512</code>；<code>finish_reason=stop</code>；非空中文回复；<code>completion_tokens=268</code>；约 <code>57.3 tok/s</code></td>
+        <td><code>8.222s</code> / <code>3059 B</code>；<code>max_tokens=512</code>；<code>finish_reason=stop</code>；非空中文回复；<code>reasoning_len=769</code></td>
       </tr>
     </tbody>
   </table>
@@ -175,7 +185,7 @@
   </div>
   <p>首轮手工 curl 也得到同形态结果：128 时 <code>2.525s</code> / <code>1294 B</code> /
   <code>length</code> / 空 <code>content</code>；512 时 <code>4.828s</code> / <code>1820 B</code> /
-  <code>stop</code> / 非空中文问候。两次独立验证互相印证。</p>
+  <code>stop</code> / 非空中文问候。多次独立验证互相印证。</p>
 </section>
 
 <section>
@@ -204,13 +214,16 @@
 </section>
 
 <section>
-  <h2><span class="num">6.</span>工具化：probe_model.py</h2>
+  <h2><span class="num">6.</span>工具化：probe_model.py（v1.1）</h2>
   <ul>
     <li><strong>零依赖</strong>：仅 Python 标准库（<code>urllib</code>），不需要 curl / jq / requests。</li>
     <li><strong>可移植</strong>：路径由脚本自身位置推导，无本机绝对路径；主机/端口/模型/提示词/token 全部可配置（CLI 或 <code>REALCUE_MODEL_*</code> 环境变量）。</li>
+    <li><strong>地址口径归一</strong>：默认服务地址 <code>http://192.168.32.6:18090/v1</code>；
+        <code>normalize_api_base()</code> 同时接受带 <code>/v1</code> 与只给 origin 的写法，
+        端点统一为 <code>/v1/models</code>、<code>/v1/chat/completions</code>，不会重复拼 <code>/v1</code>。</li>
     <li><strong>跨平台 ping</strong>：Windows 自动用 <code>-n</code>，Unix 用 <code>-c</code>；控制台输出按 ANSI 代码页解码，中文统计行不再乱码。</li>
     <li><strong>默认绕过代理</strong>：等价于 <code>curl --noproxy '*'</code>；<code>--use-proxy</code> 可关闭。</li>
-    <li><strong>结构化落盘</strong>：汇总 JSON + 原始响应 JSON + meta.txt，便于复核与 diff。</li>
+    <li><strong>结构化落盘</strong>：汇总 JSON + 原始响应 JSON + meta.txt；汇总含 <code>target.endpoints</code>。</li>
     <li><strong>明确退出码</strong>：<code>0</code> 通过 / <code>1</code> 失败 / <code>2</code> 结论不确定。</li>
   </ul>
   <h3>自测矩阵（2026-11-17 实测）</h3>
@@ -220,24 +233,29 @@
       <tr><td>默认 128 → 512 自动复测</td><td><code>python probe_model.py</code></td><td class="yes">PASS_WITH_RETRY</td><td><code>0</code></td></tr>
       <tr><td>关闭复测，复现假阴性</td><td><code>python probe_model.py --no-retry</code></td><td class="warn">INCONCLUSIVE_THINKING_TRUNCATED</td><td><code>2</code></td></tr>
       <tr><td>直接给足 token</td><td><code>python probe_model.py --max-tokens 512</code></td><td class="yes">PASS（不触发复测）</td><td><code>0</code></td></tr>
+      <tr><td>显式 <code>--base-url .../v1</code></td><td><code>python probe_model.py --base-url http://192.168.32.6:18090/v1</code></td><td class="yes">PASS_WITH_RETRY，端点不重复 <code>/v1</code></td><td><code>0</code></td></tr>
+      <tr><td>只给 origin（兼容）</td><td><code>python probe_model.py --base-url http://192.168.32.6:18090</code></td><td class="yes">PASS_WITH_RETRY，自动补 <code>/v1</code></td><td><code>0</code></td></tr>
     </tbody>
   </table>
-  <p>边界自测产物写入 <code>InspireFace-LocalRun/runtime/tmp/</code>（已被 <code>.gitignore</code> 排除），不进入仓库。</p>
+  <p>三种地址写法实测得到的 <code>target.endpoints</code> 完全一致：
+  <code>http://192.168.32.6:18090/v1/models</code> 与
+  <code>http://192.168.32.6:18090/v1/chat/completions</code>。
+  边界自测产物写入 <code>InspireFace-LocalRun/runtime/tmp/</code>（已被 <code>.gitignore</code> 排除）。</p>
 </section>
 
 <section>
   <h2><span class="num">7.</span>证据链</h2>
-  <p>目录：<code>cloud-model-probe/</code>。共 9 个结果文件，分两组：</p>
+  <p>目录：<code>cloud-model-probe/</code>。结果文件分三组：</p>
   <table>
     <thead><tr><th>文件</th><th>来源</th><th>说明</th></tr></thead>
     <tbody>
       <tr><td><code>results/chat-nihao-20261117-160705.json</code> + <code>.meta.txt</code></td><td>首轮手工 curl</td><td>128 token，<code>length</code> / 空 content</td></tr>
       <tr><td><code>results/chat-nihao-mt512-20261117-160739.json</code> + <code>.meta.txt</code></td><td>首轮手工 curl</td><td>512 token，<code>stop</code> / 非空回复</td></tr>
-      <tr><td><code>results/probe-20261117-162932.json</code></td><td>脚本正式跑</td><td>完整汇总：三段结果、诊断、verdict、结论、产出清单</td></tr>
-      <tr><td><code>results/chat-nihao-20261117-162932.json</code> + <code>.meta.txt</code></td><td>脚本正式跑</td><td>首次 128 原始响应</td></tr>
-      <tr><td><code>results/chat-nihao-mt512-20261117-162932.json</code> + <code>.meta.txt</code></td><td>脚本正式跑</td><td>复测 512 原始响应</td></tr>
-      <tr><td><code>probe_model.py</code></td><td>本轮新增</td><td>可复用探针</td></tr>
-      <tr><td><code>README.md</code></td><td>本轮新增</td><td>专用使用文档</td></tr>
+      <tr><td><code>results/probe-20261117-162932.json</code> 及同批</td><td>脚本 v1.0</td><td>origin 口径的历史快照（<code>base_url</code> 记为 <code>http://192.168.32.6:18090</code>），保留不改</td></tr>
+      <tr><td><code>results/probe-20261117-165528.json</code></td><td>脚本 v1.1</td><td>对齐 <code>.../v1</code> 口径后的完整汇总，含 <code>target.endpoints</code></td></tr>
+      <tr><td><code>results/chat-nihao-20261117-165528.json</code> + <code>.meta.txt</code></td><td>脚本 v1.1</td><td>首次 128 原始响应</td></tr>
+      <tr><td><code>results/chat-nihao-mt512-20261117-165528.json</code> + <code>.meta.txt</code></td><td>脚本 v1.1</td><td>复测 512 原始响应</td></tr>
+      <tr><td><code>probe_model.py</code> / <code>README.md</code></td><td>本轮更新</td><td>v1.1 探针与专用文档</td></tr>
     </tbody>
   </table>
   <p>中间调试态（脚本首跑、ping 解码修复前的 162455 一批 5 个文件）已在确认清单后清理，
@@ -247,13 +265,16 @@
 <section>
   <h2><span class="num">8.</span>未来端云交互的接口约定</h2>
   <ol>
-    <li><strong>服务形态</strong>：OpenAI-compatible，<code>GET /v1/models</code> + <code>POST /v1/chat/completions</code>。</li>
+    <li><strong>服务地址</strong>：<code>http://192.168.32.6:18090/v1</code>（API base）；端点
+        <code>GET /models</code> + <code>POST /chat/completions</code>，完整 URL 为
+        <code>.../v1/models</code> 与 <code>.../v1/chat/completions</code>。走配置或环境变量，
+        不硬编码；客户端也兼容只给 origin 再补 <code>/v1</code> 的写法。</li>
     <li><strong>模型发现</strong>：启动时取 <code>data[0].id</code>，不要把模型名写死在 APK 里。</li>
     <li><strong>非流式</strong>：<code>stream: false</code>；本探针只解析非流式响应，流式需另做解析。</li>
     <li><strong>token 预算</strong>：<code>max_tokens</code> 可配置且默认给足（≥512）；必须处理 <code>reasoning_content</code> 与 <code>finish_reason=length</code>。</li>
     <li><strong>成功判据</strong>：以 <code>choices[0].message.content</code> 非空为准，HTTP 200 不等于推理成功。</li>
     <li><strong>网络</strong>：局域网直连、绕过系统代理；设超时；失败要能区分「连通性 / API / 推理」三段。</li>
-    <li><strong>地址配置</strong>：走配置或环境变量，不硬编码；桥接前先跑一次本探针做自检。</li>
+    <li><strong>桥接前自检</strong>：先跑一次本探针，确认连通 / API / 推理三段都正常。</li>
   </ol>
 </section>
 
@@ -262,22 +283,24 @@
   <ul>
     <li>只证明「单次请求能拿到非空回复」，<strong>不测</strong>并发、长时稳定性、吞吐、模型精度或多轮上下文。</li>
     <li><code>ping</code> 失败不必然代表服务不可用（ICMP 可能被防火墙禁用），脚本不会因 ping 失败中断后续 HTTP 检查。</li>
-    <li>目前只验证了 <code>192.168.32.6:18090</code> 这一台局域网服务；换地址用 <code>--base-url</code> 或环境变量。</li>
+    <li>目前只验证了 <code>http://192.168.32.6:18090/v1</code> 这一台局域网服务；换地址用 <code>--base-url</code> 或环境变量。</li>
     <li>本目录不包含、也不修改 <code>app/src/</code> 下的 Android 业务源码；<strong>端侧接入尚未实现</strong>，这里是前置自检。</li>
+    <li>云侧文档（README / 模型 README / NOTES / PLAN）不在本地工作区，本报告只覆盖 RealCue 仓库内可核实的文件。</li>
   </ul>
   <h3>复现命令</h3>
   <pre><code>cd cloud-model-probe
-python probe_model.py                       # 默认 128 → 512 自动复测
-python probe_model.py --max-tokens 512      # 直接给足 token
-python probe_model.py --no-retry            # 复现假阴性，退出码 2
-python probe_model.py --base-url http://&lt;host&gt;:&lt;port&gt;   # 换服务</code></pre>
+python probe_model.py                                          # 默认 .../v1
+python probe_model.py --base-url http://192.168.32.6:18090/v1  # 显式规范地址
+python probe_model.py --base-url http://192.168.32.6:18090     # origin 兼容写法
+python probe_model.py --max-tokens 512                          # 直接给足 token
+python probe_model.py --no-retry                                # 复现假阴性，退出码 2</code></pre>
   <div class="callout blue">
     <p>详细参数、环境变量、等价 curl 命令与接口约定见
     <code>cloud-model-probe/README.md</code>；主仓库入口见 <code>README.md</code>。</p>
   </div>
 </section>
 
-<footer>RealCue · cloud-model-probe · 生成于 2026-11-17 · 证据文件均可在本仓库复核</footer>
+<footer>RealCue · cloud-model-probe v1.1 · 生成于 2026-11-17 · 证据文件均可在本仓库复核</footer>
 
 </div>
 </body>

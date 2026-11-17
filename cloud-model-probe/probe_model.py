@@ -22,6 +22,12 @@ finish_reason=length + content 为空 —— 这是**假阴性**，不是模型�
 本脚本默认按用户口径先发 128，一旦识别到该形态，自动用更大的
 --retry-max-tokens（默认 512）复测一次，并在汇总里如实记录两次结果。
 
+服务地址口径（2026-11-17 与云侧文档对齐）
+------------------------------------------
+* 规范服务地址：http://192.168.32.6:18090/v1，端点 /models 与 /chat/completions。
+* 脚本也兼容只给 origin（http://192.168.32.6:18090）的写法，会自动补 /v1，
+  两种情况都不会拼出 /v1/v1/models。
+
 设计约束
 --------
 * 仅用 Python 标准库，不依赖 curl / jq / requests，clone 后可直接跑。
@@ -49,7 +55,7 @@ from urllib import error as urlerror
 from urllib import parse as urlparse
 from urllib import request as urlrequest
 
-PROBE_VERSION = "1.0"
+PROBE_VERSION = "1.1"
 HERE = Path(__file__).resolve().parent
 DEFAULT_RESULTS = HERE / "results"
 
@@ -216,11 +222,38 @@ def ping_host(host: str, count: int = 4) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# 服务地址口径
+# --------------------------------------------------------------------------- #
+
+def normalize_api_base(base_url: str):
+    """把 --base-url 归一成 (api_base, api_prefix)，兼容两种写法。
+
+    文档规范写法：服务地址 http://host:port/v1，端点 /models、/chat/completions。
+    兼容旧写法：只给 origin（http://host:port）时自动补 /v1。
+    两种情况最终完整 URL 都是 http://host:port/v1/models，
+    **不会**拼出 /v1/v1/models。
+    """
+    base_url = base_url.rstrip("/")
+    if base_url.endswith("/v1"):
+        return base_url, ""
+    return base_url, "/v1"
+
+
+def endpoint_urls(api_base: str, api_prefix: str) -> dict:
+    """返回实际请求的完整端点 URL，落盘到汇总里便于复核。"""
+    return {
+        "models": api_base + api_prefix + "/models",
+        "chat": api_base + api_prefix + "/chat/completions",
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Step 2: /v1/models
 # --------------------------------------------------------------------------- #
 
-def fetch_models(opener, base_url: str, timeout: float) -> dict:
-    result = http_json(opener, "GET", base_url + "/v1/models", timeout=timeout)
+def fetch_models(opener, models_url: str, timeout: float) -> dict:
+    """models_url 是完整端点 URL（由 endpoint_urls() 生成），此处不再拼路径。"""
+    result = http_json(opener, "GET", models_url, timeout=timeout)
     ids = []
     doc = result.get("json")
     if isinstance(doc, dict):
@@ -236,17 +269,16 @@ def fetch_models(opener, base_url: str, timeout: float) -> dict:
 # Step 3: /v1/chat/completions
 # --------------------------------------------------------------------------- #
 
-def chat_once(opener, base_url: str, model: str, prompt: str,
+def chat_once(opener, chat_url: str, model: str, prompt: str,
               max_tokens: int, timeout: float) -> dict:
-    """固定 stream=false（本探针只解析非流式响应）。"""
+    """固定 stream=false（本探针只解析非流式响应）；chat_url 为完整端点 URL。"""
     payload = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": max_tokens,
         "stream": False,
     }
-    result = http_json(opener, "POST", base_url + "/v1/chat/completions",
-                       payload, timeout)
+    result = http_json(opener, "POST", chat_url, payload, timeout)
     doc = result.get("json")
     doc = doc if isinstance(doc, dict) else {}
     try:
@@ -328,6 +360,11 @@ EPILOG = """等价的手工 curl（本脚本内部用 Python 标准库实现了�
 环境变量: REALCUE_MODEL_HOST / REALCUE_MODEL_PORT / REALCUE_MODEL_PROMPT /
           REALCUE_MODEL_BASE_URL / REALCUE_MODEL_NAME / REALCUE_MODEL_MAX_TOKENS /
           REALCUE_MODEL_RETRY_MAX_TOKENS / REALCUE_MODEL_TIMEOUT
+
+服务地址口径（与云侧文档一致）: http://192.168.32.6:18090/v1
+  --base-url 填 http://192.168.32.6:18090/v1（推荐）或
+             http://192.168.32.6:18090（origin，脚本自动补 /v1）都可用；
+  端点为 /models 与 /chat/completions，完整 URL 见上面两条 curl。
 """
 
 
@@ -342,7 +379,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="端口（默认 %(default)s）")
     ap.add_argument("--base-url",
                     default=os.environ.get("REALCUE_MODEL_BASE_URL"),
-                    help="完整服务地址，设置后覆盖 --host/--port")
+                    help="服务地址，推荐 http://host:port/v1；也可只给 origin（自动补 /v1）。设置后覆盖 --host/--port")
     ap.add_argument("--model", default=os.environ.get("REALCUE_MODEL_NAME"),
                     help="覆盖自动探测到的 data[0].id")
     ap.add_argument("--prompt", default=DEFAULT_PROMPT,
@@ -370,9 +407,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
 
-    base_url = args.base_url or ("http://%s:%d" % (args.host, args.port))
-    base_url = base_url.rstrip("/")
-    parsed = urlparse.urlparse(base_url)
+    # 服务地址规范口径：http://host:port/v1（与云侧文档一致）。
+    # 若只给 origin（http://host:port），normalize_api_base() 会自动补 /v1，
+    # 两种情况都不会拼出 /v1/v1/models。
+    raw_base = args.base_url or ("http://%s:%d/v1" % (args.host, args.port))
+    api_base, api_prefix = normalize_api_base(raw_base)
+    endpoints = endpoint_urls(api_base, api_prefix)
+    parsed = urlparse.urlparse(api_base)
     ping_target = parsed.hostname or args.host
 
     results_dir = Path(args.out_dir).expanduser().resolve()
@@ -381,7 +422,9 @@ def main(argv=None) -> int:
     opener = make_opener(args.use_proxy)
 
     log("=== RealCue cloud model probe v%s ===" % PROBE_VERSION)
-    log("target    : %s" % base_url)
+    log("service   : %s" % api_base)
+    log("endpoints : %s" % endpoints["models"])
+    log("            %s" % endpoints["chat"])
     log("proxy     : %s" % ("system proxy" if args.use_proxy else "BYPASSED (--noproxy '*')"))
     log("prompt    : %s" % args.prompt)
     log("max_tokens: %d (retry %s)" % (
@@ -405,12 +448,13 @@ def main(argv=None) -> int:
     log("")
 
     # --- Step 2: /v1/models ------------------------------------------------ #
-    models = fetch_models(opener, base_url, args.timeout)
+    models = fetch_models(opener, endpoints["models"], args.timeout)
     auto_model = models.get("auto_model")
     if not models.get("ok") or not auto_model:
         log("[2/3] GET /v1/models: FAIL (HTTP=%s)" % models.get("http_status"))
         log("      error=%s" % models.get("error"))
-        _write_failure_summary(results_dir, stamp, base_url, args, ping, models,
+        _write_failure_summary(results_dir, stamp, api_base, endpoints,
+                               args, ping, models,
                                "models endpoint unreachable or returned no model id")
         return 1
     model = args.model or auto_model
@@ -423,7 +467,7 @@ def main(argv=None) -> int:
     log("")
 
     # --- Step 3: chat ------------------------------------------------------ #
-    primary = chat_once(opener, base_url, model, args.prompt,
+    primary = chat_once(opener, endpoints["chat"], model, args.prompt,
                         args.max_tokens, args.timeout)
     primary_files = save_raw_response(results_dir, primary,
                                       "chat-nihao-%s" % stamp)
@@ -444,7 +488,7 @@ def main(argv=None) -> int:
         )
         log("      -> %s" % retry_reason)
         log("      -> 自动复测 max_tokens=%d" % args.retry_max_tokens)
-        retry = chat_once(opener, base_url, model, args.prompt,
+        retry = chat_once(opener, endpoints["chat"], model, args.prompt,
                           args.retry_max_tokens, args.timeout)
         retry_files = save_raw_response(
             results_dir, retry,
@@ -474,8 +518,15 @@ def main(argv=None) -> int:
     summary = {
         "probe_version": PROBE_VERSION,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "target": {"base_url": base_url, "host": ping_target,
-                   "port": args.port, "proxy": "system" if args.use_proxy else "bypassed"},
+        "target": {
+            "base_url": api_base,
+            "api_prefix": api_prefix,
+            "endpoints": endpoints,
+            "host": ping_target,
+            "port": args.port,
+            "proxy": "system" if args.use_proxy else "bypassed",
+            "address_convention": "service base http://host:port/v1 + /models, /chat/completions",
+        },
         "request": {"prompt": args.prompt, "max_tokens": args.max_tokens,
                     "retry_max_tokens": None if args.no_retry else args.retry_max_tokens,
                     "stream": False, "timeout_s": args.timeout,
@@ -578,13 +629,14 @@ def _conclusion(verdict: str, ping: dict, model: str,
     return " ".join(parts)
 
 
-def _write_failure_summary(results_dir: Path, stamp: str, base_url: str,
-                           args, ping: dict, models: dict, reason: str) -> None:
+def _write_failure_summary(results_dir: Path, stamp: str, api_base: str,
+                           endpoints: dict, args, ping: dict,
+                           models: dict, reason: str) -> None:
     """/v1/models 都拿不到时，也要留一份可复核的失败记录。"""
     doc = {
         "probe_version": PROBE_VERSION,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "target": {"base_url": base_url},
+        "target": {"base_url": api_base, "endpoints": endpoints},
         "steps": {"ping": ping, "models": public_step(models)},
         "verdict": "FAIL", "exit_code": 1,
         "reason": reason,

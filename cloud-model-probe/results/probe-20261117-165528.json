@@ -1,0 +1,281 @@
+{
+  "probe_version": "1.1",
+  "generated_at": "2026-11-17T16:55:42+08:00",
+  "target": {
+    "base_url": "http://192.168.32.6:18090/v1",
+    "api_prefix": "",
+    "endpoints": {
+      "models": "http://192.168.32.6:18090/v1/models",
+      "chat": "http://192.168.32.6:18090/v1/chat/completions"
+    },
+    "host": "192.168.32.6",
+    "port": 18090,
+    "proxy": "bypassed",
+    "address_convention": "service base http://host:port/v1 + /models, /chat/completions"
+  },
+  "request": {
+    "prompt": "你好",
+    "max_tokens": 128,
+    "retry_max_tokens": 512,
+    "stream": false,
+    "timeout_s": 30.0,
+    "model_used": "qwen3-vl-4b-thinking",
+    "model_autodetected": "qwen3-vl-4b-thinking",
+    "model_overridden": false
+  },
+  "steps": {
+    "ping": {
+      "command": "ping -n 4 -w 2000 192.168.32.6",
+      "note": "Windows ping: 用 -n 代替 Unix -c（本机 -c 需管理员权限）",
+      "semantics": "ICMP 仅验证网络连通性；不验证 API 端口、模型加载或推理",
+      "ok": true,
+      "returncode": 0,
+      "raw": "\r\n正在 Ping 192.168.32.6 具有 32 字节的数据:\r\n来自 192.168.32.6 的回复: 字节=32 时间=13ms TTL=62\r\n来自 192.168.32.6 的回复: 字节=32 时间=10ms TTL=62\r\n来自 192.168.32.6 的回复: 字节=32 时间=8ms TTL=62\r\n来自 192.168.32.6 的回复: 字节=32 时间=14ms TTL=62\r\n\r\n192.168.32.6 的 Ping 统计信息:\r\n    数据包: 已发送 = 4，已接收 = 4，丢失 = 0 (0% 丢失)，\r\n往返行程的估计时间(以毫秒为单位):\r\n    最短 = 8ms，最长 = 14ms，平均 = 11ms\r\n",
+      "loss_pct": 0.0,
+      "avg_ms": 11.0,
+      "sent": 4
+    },
+    "models": {
+      "ok": true,
+      "http_status": 200,
+      "elapsed_s": 0.024843,
+      "size_bytes": 730,
+      "model_ids": [
+        "qwen3-vl-4b-thinking"
+      ],
+      "auto_model": "qwen3-vl-4b-thinking",
+      "raw_response": {
+        "models": [
+          {
+            "name": "qwen3-vl-4b-thinking",
+            "model": "qwen3-vl-4b-thinking",
+            "modified_at": "",
+            "size": "",
+            "digest": "",
+            "type": "model",
+            "description": "",
+            "tags": [
+              ""
+            ],
+            "capabilities": [
+              "completion",
+              "multimodal"
+            ],
+            "parameters": "",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "",
+              "families": [
+                ""
+              ],
+              "parameter_size": "",
+              "quantization_level": ""
+            }
+          }
+        ],
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen3-vl-4b-thinking",
+            "aliases": [
+              "qwen3-vl-4b-thinking"
+            ],
+            "tags": [],
+            "object": "model",
+            "architecture": {
+              "input_modalities": [
+                "text",
+                "image",
+                "video"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "created": 1794905732,
+            "owned_by": "llamacpp",
+            "meta": {
+              "vocab_type": 2,
+              "n_vocab": 151936,
+              "n_ctx": 32768,
+              "n_ctx_train": 262144,
+              "n_embd": 2560,
+              "n_params": 4022468096,
+              "size": 4274448384,
+              "ftype": "Q8_0"
+            }
+          }
+        ]
+      }
+    },
+    "chat_primary": {
+      "ok": true,
+      "http_status": 200,
+      "elapsed_s": 2.271417,
+      "size_bytes": 1296,
+      "request_max_tokens": 128,
+      "request_stream": false,
+      "model": "qwen3-vl-4b-thinking",
+      "response_id": "chatcmpl-V9fMdT5tf0u9TmbM3p3ViaL7wJjNNihF",
+      "system_fingerprint": "b0-unknown",
+      "finish_reason": "length",
+      "content": "",
+      "reasoning_content": "嗯，用户发来“你好”，看起来是个简单的问候。我需要友好回应，同时保持专业。可能用户想测试我的反应，或者刚开始接触这个平台。要避免太机械，可以带点温度，比如用表情符号。还要考虑后续对话可能需要的引导，比如主动询问需求。不过不能太啰嗦，毕竟用户可能只是随便打个招呼。应该用中文回复，保持简洁自然，比如“你好！有什么我可以帮助你的吗？”这样既礼貌又开放，用户可能接着提问或者需要帮忙。另外，检查有没有错别字，确保回复准确。可能还要注意语气",
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 11,
+        "total_tokens": 139,
+        "prompt_tokens_details": {
+          "cached_tokens": 10
+        }
+      },
+      "timings": {
+        "cache_n": 10,
+        "prompt_n": 1,
+        "prompt_ms": 18.849,
+        "prompt_per_token_ms": 18.849,
+        "prompt_per_second": 53.05321237200913,
+        "predicted_n": 128,
+        "predicted_ms": 2210.545,
+        "predicted_per_token_ms": 17.405866141732282,
+        "predicted_per_second": 57.451895347075045
+      },
+      "thinking_model": true,
+      "truncated_by_thinking": true,
+      "inference_ok": false,
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "length",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "reasoning_content": "嗯，用户发来“你好”，看起来是个简单的问候。我需要友好回应，同时保持专业。可能用户想测试我的反应，或者刚开始接触这个平台。要避免太机械，可以带点温度，比如用表情符号。还要考虑后续对话可能需要的引导，比如主动询问需求。不过不能太啰嗦，毕竟用户可能只是随便打个招呼。应该用中文回复，保持简洁自然，比如“你好！有什么我可以帮助你的吗？”这样既礼貌又开放，用户可能接着提问或者需要帮忙。另外，检查有没有错别字，确保回复准确。可能还要注意语气"
+            }
+          }
+        ],
+        "created": 1794905734,
+        "model": "qwen3-vl-4b-thinking",
+        "system_fingerprint": "b0-unknown",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 11,
+          "total_tokens": 139,
+          "prompt_tokens_details": {
+            "cached_tokens": 10
+          }
+        },
+        "id": "chatcmpl-V9fMdT5tf0u9TmbM3p3ViaL7wJjNNihF",
+        "timings": {
+          "cache_n": 10,
+          "prompt_n": 1,
+          "prompt_ms": 18.849,
+          "prompt_per_token_ms": 18.849,
+          "prompt_per_second": 53.05321237200913,
+          "predicted_n": 128,
+          "predicted_ms": 2210.545,
+          "predicted_per_token_ms": 17.405866141732282,
+          "predicted_per_second": 57.451895347075045
+        }
+      }
+    },
+    "chat_retry": {
+      "ok": true,
+      "http_status": 200,
+      "elapsed_s": 8.22227,
+      "size_bytes": 3059,
+      "request_max_tokens": 512,
+      "request_stream": false,
+      "model": "qwen3-vl-4b-thinking",
+      "response_id": "chatcmpl-unp39d4U5N6CyKoucLtCtpTBW7OYs5sg",
+      "system_fingerprint": "b0-unknown",
+      "finish_reason": "stop",
+      "content": "你好！有什么我可以帮助你的吗？😊 无论是解答问题、提供建议，还是单纯聊天，都欢迎告诉我～",
+      "reasoning_content": "嗯，用户发来一个简单的“你好”。看起来他们可能刚开始和我互动，或者只是测试一下我的反应。首先，我需要回应礼貌，用中文说“你好！有什么我可以帮助你的吗？”这样既友好又开放，让他们知道我可以提供什么帮助。\n\n接下来，我得考虑用户可能的需求。他们可能只是随便打招呼，或者有具体的问题要解决。这时候要保持耐心，准备好回答各种可能的问题。比如，他们可能需要信息查询、技术支持，或者只是想聊天。所以回复里要包含多种可能的帮助方向，比如解答问题、提供信息、处理请求等。\n\n还要注意语气要自然，避免太机械。用“有什么我可以帮助你的吗？”比直接说“请告诉我你的需求”更亲切。可能需要避免使用专业术语，保持口语化。比如，不用“我将尽力提供帮助”这种说法，而是用更简单的表达。\n\n另外，用户可能没有明确的需求，所以需要引导他们说出具体的问题。例如，可以问“你是想了解某个话题，还是需要解决某个问题呢？”这样能更好地理解他们的需求。不过在第一个回复里，可能不需要太长，保持简洁。\n\n还要检查有没有文化差异的问题。中文里“你好”之后通常会接询问或回应，所以回复要符合中文的交流习惯。可能需要避免使用英文的“Hi”之类的词，保持全中文。\n\n可能用户是第一次接触这个AI，所以回复要简短但全面。比如，先问候，再提供帮助选项，最后邀请他们提问。这样结构清晰，用户容易理解。\n\n有没有可能遗漏什么？比如，是否需要添加表情符号？有时候表情可以增加亲和力，但可能不太合适，还是保持专业一些。或者，是否要提到之前的对话历史？但用户第一次发消息，没有历史，所以不用考虑。\n\n最后，确保没有错别字，比如“帮助”是不是正确，有没有标点符号错误。检查一下回复是否通顺，有没有语法错误。\n\n总结下来，回复应该：友好问候、提供帮助选项、邀请用户进一步说明需求，保持简洁自然，符合中文习惯。\n",
+      "usage": {
+        "completion_tokens": 467,
+        "prompt_tokens": 11,
+        "total_tokens": 478,
+        "prompt_tokens_details": {
+          "cached_tokens": 10
+        }
+      },
+      "timings": {
+        "cache_n": 10,
+        "prompt_n": 1,
+        "prompt_ms": 17.605,
+        "prompt_per_token_ms": 17.605,
+        "prompt_per_second": 56.80204487361545,
+        "predicted_n": 467,
+        "predicted_ms": 8129.207,
+        "predicted_per_token_ms": 17.444650214592276,
+        "predicted_per_second": 57.324164583335126
+      },
+      "thinking_model": true,
+      "truncated_by_thinking": false,
+      "inference_ok": true,
+      "raw_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "你好！有什么我可以帮助你的吗？😊 无论是解答问题、提供建议，还是单纯聊天，都欢迎告诉我～",
+              "reasoning_content": "嗯，用户发来一个简单的“你好”。看起来他们可能刚开始和我互动，或者只是测试一下我的反应。首先，我需要回应礼貌，用中文说“你好！有什么我可以帮助你的吗？”这样既友好又开放，让他们知道我可以提供什么帮助。\n\n接下来，我得考虑用户可能的需求。他们可能只是随便打招呼，或者有具体的问题要解决。这时候要保持耐心，准备好回答各种可能的问题。比如，他们可能需要信息查询、技术支持，或者只是想聊天。所以回复里要包含多种可能的帮助方向，比如解答问题、提供信息、处理请求等。\n\n还要注意语气要自然，避免太机械。用“有什么我可以帮助你的吗？”比直接说“请告诉我你的需求”更亲切。可能需要避免使用专业术语，保持口语化。比如，不用“我将尽力提供帮助”这种说法，而是用更简单的表达。\n\n另外，用户可能没有明确的需求，所以需要引导他们说出具体的问题。例如，可以问“你是想了解某个话题，还是需要解决某个问题呢？”这样能更好地理解他们的需求。不过在第一个回复里，可能不需要太长，保持简洁。\n\n还要检查有没有文化差异的问题。中文里“你好”之后通常会接询问或回应，所以回复要符合中文的交流习惯。可能需要避免使用英文的“Hi”之类的词，保持全中文。\n\n可能用户是第一次接触这个AI，所以回复要简短但全面。比如，先问候，再提供帮助选项，最后邀请他们提问。这样结构清晰，用户容易理解。\n\n有没有可能遗漏什么？比如，是否需要添加表情符号？有时候表情可以增加亲和力，但可能不太合适，还是保持专业一些。或者，是否要提到之前的对话历史？但用户第一次发消息，没有历史，所以不用考虑。\n\n最后，确保没有错别字，比如“帮助”是不是正确，有没有标点符号错误。检查一下回复是否通顺，有没有语法错误。\n\n总结下来，回复应该：友好问候、提供帮助选项、邀请用户进一步说明需求，保持简洁自然，符合中文习惯。\n"
+            }
+          }
+        ],
+        "created": 1794905742,
+        "model": "qwen3-vl-4b-thinking",
+        "system_fingerprint": "b0-unknown",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 467,
+          "prompt_tokens": 11,
+          "total_tokens": 478,
+          "prompt_tokens_details": {
+            "cached_tokens": 10
+          }
+        },
+        "id": "chatcmpl-unp39d4U5N6CyKoucLtCtpTBW7OYs5sg",
+        "timings": {
+          "cache_n": 10,
+          "prompt_n": 1,
+          "prompt_ms": 17.605,
+          "prompt_per_token_ms": 17.605,
+          "prompt_per_second": 56.80204487361545,
+          "predicted_n": 467,
+          "predicted_ms": 8129.207,
+          "predicted_per_token_ms": 17.444650214592276,
+          "predicted_per_second": 57.324164583335126
+        }
+      }
+    }
+  },
+  "diagnosis": {
+    "thinking_model_detected": true,
+    "primary_truncated_by_thinking": true,
+    "auto_retry_triggered": true,
+    "retry_reason": "thinking 模型假阴性：finish_reason=length、content 为空、reasoning_content 占满 128 token",
+    "ping_only_checks_connectivity": true,
+    "inference_proven_by": "non-empty choices[0].message.content"
+  },
+  "verdict": "PASS_WITH_RETRY",
+  "exit_code": 0,
+  "conclusion": "局域网连通正常（ping 4 次，丢包 0.0%，平均 11.0ms）。 /v1/models 返回模型 qwen3-vl-4b-thinking。 首次 max_tokens=128 触发 thinking 模型假阴性（finish_reason=length、content 为空）；自动提升到 512 后，finish_reason=stop 且返回非空中文回复。 => 网络连通、模型 API 与实际推理均正常。",
+  "artifacts": {
+    "summary": "probe-20261117-165528.json",
+    "chat_primary": {
+      "json": "chat-nihao-20261117-165528.json",
+      "meta": "chat-nihao-20261117-165528.meta.txt"
+    },
+    "chat_retry": {
+      "json": "chat-nihao-mt512-20261117-165528.json",
+      "meta": "chat-nihao-mt512-20261117-165528.meta.txt"
+    }
+  }
+}
